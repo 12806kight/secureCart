@@ -1,0 +1,27 @@
+# Local Terraform directories and plugins
+.terraform/
+
+# Terraform state files and backups
+*.tfstate
+*.tfstate.backup
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Terraform variables containing secrets
+*secrets*.tfvars
+*.tfvars
+*.tfvars.json
+
+# Local environment variable overrides
+.envrc
+.env
+
+# AWS CLI / Local credential caches
+.aws/
+credentials
+*.pem
+
+# VS Code specific directories and configurations
+.vscode/

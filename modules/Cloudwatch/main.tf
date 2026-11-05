@@ -5,7 +5,7 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 
 data "aws_lb" "securecart_alb" {
-  name = "securecart-alb" 
+  name = "securecart-alb"
 }
 
 resource "aws_s3_bucket" "alb_logs" {

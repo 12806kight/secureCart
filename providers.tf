@@ -8,11 +8,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = "REDACTED_BUCKET_NAME"
-    key          = "securecart/terraform.tfstate"
-    region       = "us-east-1"
+    bucket = "REDACTED_BUCKET_NAME"
+    key    = "securecart/terraform.tfstate"
+    region = "us-east-1"
     #use_lockfile = true
-    encrypt      = true
+    encrypt = true
   }
 }
 

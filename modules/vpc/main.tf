@@ -40,7 +40,7 @@ resource "aws_route_table" "securecart-public-rt" {
 resource "aws_internet_gateway" "igw_TS" {
   vpc_id = aws_vpc.securecart-vpc.id
 
-  tags = { 
+  tags = {
     Name = "internet gateway securecart"
   }
 }
@@ -53,7 +53,7 @@ resource "aws_route_table" "public_rt" {
     gateway_id = aws_internet_gateway.igw_TS.id
   }
 
-  tags = { 
+  tags = {
     Name = "our public route table which makes our public subnets public by routing traffic to the internet gateway"
   }
 }
@@ -65,7 +65,7 @@ resource "aws_route_table_association" "public_assoc" {
   route_table_id = aws_route_table.public_rt.id
 }
 
-resource "aws_eip" "nat_eip" { 
+resource "aws_eip" "nat_eip" {
   domain = "vpc"
 
   tags = {
@@ -75,24 +75,24 @@ resource "aws_eip" "nat_eip" {
 
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
-  
-  subnet_id     = aws_subnet.this[keys({ for key, value in var.subnets : key => value if value.type == "public" })[0]].id
+
+  subnet_id = aws_subnet.this[keys({ for key, value in var.subnets : key => value if value.type == "public" })[0]].id
 
   tags = {
     Name = "our nat gateway"
   }
-  depends_on = [aws_internet_gateway.igw_TS] 
+  depends_on = [aws_internet_gateway.igw_TS]
 }
 
 resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.securecart-vpc.id
 
   route {
-    cidr_block = var.private_route_cidr_block
+    cidr_block     = var.private_route_cidr_block
     nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
 
-  tags = { 
+  tags = {
     Name = "our private route table which keeps our private subnets PRIVATE by routing traffic to the internet gateway"
   }
 }

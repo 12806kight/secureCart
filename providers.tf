@@ -11,7 +11,7 @@ terraform {
     bucket       = "REDACTED_BUCKET_NAME"
     key          = "securecart/terraform.tfstate"
     region       = "us-east-1"
-    use_lockfile = true
+    #use_lockfile = true
     encrypt      = true
   }
 }

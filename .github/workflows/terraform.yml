@@ -8,7 +8,7 @@ on:
     branches:
       - main
 
-# Core permissions are the requirement for OIDC authentication
+# Core permission requirement for OIDC authentication
 permissions:
   id-token: write # Required for requesting the JWT token from AWS
   contents: read  # Required to check out the repository code

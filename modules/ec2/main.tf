@@ -11,6 +11,10 @@ resource "aws_launch_template" "app" {
   # Example User Data script to initialize a simple Node/Python web server on startup
   user_data = base64encode(<<-EOF
               #!/bin/bash
+
+              export DEBIAN_FRONTEND=noninteractive
+              export NEEDRESTART_MODE=a
+              
               apt-get update -y
               apt-get install -y nginx
               systemctl start nginx
@@ -38,6 +42,8 @@ resource "aws_autoscaling_group" "app_asg" {
   desired_capacity   = 2
   max_size           = 4
   min_size           = 1
+
+   target_group_arns   = [var.alb_target_group_arn] 
 
   launch_template {
     id      = aws_launch_template.app.id

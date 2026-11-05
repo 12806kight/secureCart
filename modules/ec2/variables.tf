@@ -22,3 +22,10 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro" # Free Tier friendly
 }
+
+
+variable "alb_target_group_arn" {
+  type        = string
+  description = "The ARN of the ALB target group for the Auto Scaling Group"
+}
+

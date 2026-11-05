@@ -47,7 +47,7 @@ resource "aws_security_group_rule" "alb_ingress_https" {
 
 resource "aws_security_group_rule" "alb_egress_to_app" {
   type                     = "egress"
-  from_port                = 8080
+  from_port                = 80
   to_port                  = 8080
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.app_sg.id # Breaks circular reference
@@ -60,7 +60,7 @@ resource "aws_security_group_rule" "alb_egress_to_app" {
 
 resource "aws_security_group_rule" "app_ingress_from_alb" {
   type                     = "ingress"
-  from_port                = 8080
+  from_port                = 80
   to_port                  = 8080
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.alb_sg.id
@@ -74,6 +74,15 @@ resource "aws_security_group_rule" "app_egress_to_internet" {
   to_port           = 443
   protocol          = "tcp"
   cidr_blocks       = ["0.0.0.0/0"] # Safe behind a private subnet NAT Gateway
+  security_group_id = aws_security_group.app_sg.id
+}
+
+resource "aws_security_group_rule" "app_egress_http" {
+  type              = "egress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.app_sg.id
 }
 

@@ -54,6 +54,10 @@ jobs:
 
       # 7. Generate execution plan for all updates
       - name: Terraform Plan
+        env:
+           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+
         run: terraform plan -input=false
 
       # 8. Apply updates ONLY on a push directly to the main branch

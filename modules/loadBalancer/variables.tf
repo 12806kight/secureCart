@@ -18,3 +18,5 @@ variable "public_subnet_ids" {
   description = "List of public subnet IDs where the ALB will be deployed"
 }
 
+variable "certificate_arn" { type = string }
+

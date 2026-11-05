@@ -9,19 +9,26 @@ resource "aws_launch_template" "app" {
   }
 
   # Example User Data script to initialize a simple Node/Python web server on startup
-  user_data = base64encode(<<-EOF
+  
+    user_data = base64encode(<<-EOF
               #!/bin/bash
-
               export DEBIAN_FRONTEND=noninteractive
               export NEEDRESTART_MODE=a
               
               apt-get update -y
               apt-get install -y nginx
-              systemctl start nginx
+
+              # Modify Nginx configuration to listen on port 8080 instead of 80
+              sed -i 's/listen 80 default_server;/listen 8080 default_server;/g' /etc/nginx/sites-available/default
+              sed -i 's/listen \[::\]:80 default_server;/listen \[::\]:8080 default_server;/g' /etc/nginx/sites-available/default
+
+              systemctl restart nginx
               systemctl enable nginx
+              
               echo "<h1>Welcome to SecureCart Application Server</h1>" > /var/www/html/index.html
               EOF
   )
+
 
   lifecycle {
     create_before_destroy = true

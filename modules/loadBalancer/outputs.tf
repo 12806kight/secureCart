@@ -13,3 +13,7 @@ output "alb_arn" {
   value       = aws_lb.securecart_alb.arn
 }
 
+output "alb_zone_id" {
+  description = "The Canonical Hosted Zone ID of the Application Load Balancer"
+  value       = aws_lb.securecart_alb.zone_id
+}

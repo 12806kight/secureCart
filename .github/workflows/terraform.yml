@@ -16,7 +16,6 @@ permissions:
 jobs:
   terraform:
     name: "Terraform Execution"
-    # Pinned to Ubuntu 24.04 to remain stable ahead of the Ubuntu 26 migration
     runs-on: ubuntu-24.04
 
     env:
@@ -27,39 +26,41 @@ jobs:
       # 1. Check out the source code
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      # 2. OPTIONAL: Debug OIDC Token Claims (Fixed multi-line format)
       - name: Debug OIDC Token Claims
-  run: |
-    # Request a raw token using GitHub's runtime variables
-    JWT=$(curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" -s "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=://amazonaws.com" | jq -r '.value')
-    # Decode and print payload section of JWT safely
-    echo "=== DECODED CLAIMS ==="
-    echo "$JWT" | cut -d'.' -f2 | base64 --decode | jq .
-      # 2. Authenticate to AWS dynamically using OIDC
+        run: |
+          JWT=$(curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" -s "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+          echo "=== DECODED CLAIMS ==="
+          echo "$JWT" | cut -d'.' -f2 | base64 --decode | jq .
+
+      # 3. Authenticate to AWS dynamically using OIDC
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+          # Uses standard default audience (sts.amazonaws.com)
 
-      # 3. Install Terraform CLI
+      # 4. Install Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
 
-      # 4. Initialize Terraform working directory
+      # 5. Initialize Terraform working directory
       - name: Terraform Init
         run: terraform init
 
-      # 5. Format validation check
+      # 6. Format validation check
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 6. Generate execution plan for all updates
+      # 7. Generate execution plan for all updates
       - name: Terraform Plan
         run: terraform plan -input=false
 
-      # 7. Apply updates ONLY on a push directly to the main branch
+      # 8. Apply updates ONLY on a push directly to the main branch
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false

@@ -35,7 +35,7 @@ module "ec2" {
 
   # Passes your application tier firewall group
   app_security_group_id = module.securityGroup.app_sg_id
-
+  alb_target_group_arn = module.loadBalancer.target_group_arn
 
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]

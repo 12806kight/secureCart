@@ -12,3 +12,4 @@ output "alb_arn" {
   description = "The ARN of the application load balancer"
   value       = aws_lb.securecart_alb.arn
 }
+

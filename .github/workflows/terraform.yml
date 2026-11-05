@@ -16,11 +16,11 @@ permissions:
 jobs:
   terraform:
     name: "Terraform Execution"
-    runs-on: ubuntu-latest
+    # Pinned to Ubuntu 24.04 to remain stable ahead of the Ubuntu 26 migration
+    runs-on: ubuntu-24.04
 
     env:
       AWS_REGION: "us-east-1"
-      # Replace this with the output ARN generated in Step 1
       AWS_ROLE_ARN: "arn:aws:iam::298490729231:role/github-actions-terraform-role" 
 
     steps:
@@ -34,13 +34,14 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-          audience: ://amazonaws.com
+          # FIX: Restored the proper protocol prefix 'https' to the audience URL
+          audience: https://amazonaws.com
 
       # 3. Install Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.6.0" # Match your specific version requirement
+          terraform_version: "1.6.0"
 
       # 4. Initialize Terraform working directory
       - name: Terraform Init

@@ -17,7 +17,7 @@ resource "aws_db_instance" "rds_instance_TS" {
   max_allocated_storage = 100 # Enables storage autoscaling without manual intervention
   storage_type          = "gp3"
   engine                = "mysql"        # Ensure this matches your port 3306 rules
-  engine_version        = "8.0"       # Declaring an explicit minor version avoids AWS API deployment errors
+  engine_version        = "8.0"          # Declaring an explicit minor version avoids AWS API deployment errors
   instance_class        = "db.t4g.micro" # Cost-efficient instance type
 
   # Database Credentials (Injected from variables)

@@ -9,6 +9,6 @@ output "app_sg_id" {
 }
 
 output "alb_sg_id" {
-    description = "Exposes the ALB Security Group"
-    value = aws_security_group.alb_sg.id
+  description = "Exposes the ALB Security Group"
+  value       = aws_security_group.alb_sg.id
 }

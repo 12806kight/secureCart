@@ -22,7 +22,7 @@ resource "aws_lb_target_group" "app_tg" {
 
   health_check {
     enabled             = true
-    path                = "/" 
+    path                = "/"
     port                = "8080"
     protocol            = "HTTP"
     interval            = 30
@@ -58,7 +58,7 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06" # Fixed missing '-2-' in policy string
-  certificate_arn   = var.certificate_arn 
+  certificate_arn   = var.certificate_arn
 
   default_action {
     type             = "forward"

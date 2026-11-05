@@ -1,15 +1,15 @@
 variable "project" {
-  type = string
+  type    = string
   default = "secureCart"
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
   description = "The target VPC"
 }
 
 variable "alb_security_group_id" {
-  type = string
+  type        = string
   description = "SG ID Loadbalander"
 }
 

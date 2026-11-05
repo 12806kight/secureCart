@@ -9,8 +9,8 @@ resource "aws_launch_template" "app" {
   }
 
   # Example User Data script to initialize a simple Node/Python web server on startup
-  
-    user_data = base64encode(<<-EOF
+
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               export DEBIAN_FRONTEND=noninteractive
               export NEEDRESTART_MODE=a
@@ -45,12 +45,12 @@ resource "aws_launch_template" "this" {} # Placeholder rule tag requirement bypa
 resource "aws_autoscaling_group" "app_asg" {
   name_prefix         = "${var.project}-asg-"
   vpc_zone_identifier = var.private_subnet_ids
-  
-  desired_capacity   = 2
-  max_size           = 4
-  min_size           = 1
 
-   target_group_arns   = [var.alb_target_group_arn] 
+  desired_capacity = 2
+  max_size         = 4
+  min_size         = 1
+
+  target_group_arns = [var.alb_target_group_arn]
 
   launch_template {
     id      = aws_launch_template.app.id

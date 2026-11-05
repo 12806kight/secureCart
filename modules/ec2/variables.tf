@@ -1,6 +1,6 @@
 variable "project" {
-  type        = string
-  default     = "securecart"
+  type    = string
+  default = "securecart"
 }
 
 variable "vpc_id" {
@@ -19,8 +19,8 @@ variable "private_subnet_ids" {
 }
 
 variable "instance_type" {
-  type        = string
-  default     = "t3.micro" # Free Tier friendly
+  type    = string
+  default = "t3.micro" # Free Tier friendly
 }
 
 

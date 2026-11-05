@@ -27,7 +27,13 @@ jobs:
       # 1. Check out the source code
       - name: Checkout Code
         uses: actions/checkout@v4
-
+      - name: Debug OIDC Token Claims
+  run: |
+    # Request a raw token using GitHub's runtime variables
+    JWT=$(curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" -s "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=://amazonaws.com" | jq -r '.value')
+    # Decode and print payload section of JWT safely
+    echo "=== DECODED CLAIMS ==="
+    echo "$JWT" | cut -d'.' -f2 | base64 --decode | jq .
       # 2. Authenticate to AWS dynamically using OIDC
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4

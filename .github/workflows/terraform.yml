@@ -18,10 +18,6 @@ jobs:
     name: "Terraform Execution"
     runs-on: ubuntu-24.04
 
-    env:
-      AWS_REGION: "us-east-1"
-      AWS_ROLE_ARN: "arn:aws:iam::298490729231:role/github-actions-terraform-role" 
-
     steps:
       # 1. Check out the source code
       - name: Checkout Code
@@ -38,9 +34,9 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
-          # Uses standard default audience (sts.amazonaws.com)
+          role-to-assume: arn:aws:iam::298490729231:role/github-actions-terraform-role
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
 
       # 4. Install Terraform CLI
       - name: Setup Terraform

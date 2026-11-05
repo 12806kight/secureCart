@@ -30,7 +30,7 @@ jobs:
           echo "=== DECODED CLAIMS ==="
           echo "$JWT" | cut -d'.' -f2 | base64 --decode | jq .
 
-      # 3. Authenticate to AWS dynamically using OIDC
+      # 3. Authenticate to AWS dynamically using OIDCs
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:

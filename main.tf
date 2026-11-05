@@ -65,3 +65,7 @@ module "s3" {
   source      = "./modules/s3"
   bucket_name = "securecart-tf-state-prod"
 }
+
+module "iam_oidc" {
+  source = "./modules/iam_oidc"
+}

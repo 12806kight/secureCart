@@ -34,8 +34,6 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-          # FIX: Restored the proper protocol prefix 'https' to the audience URL
-          audience: https://amazonaws.com
 
       # 3. Install Terraform CLI
       - name: Setup Terraform

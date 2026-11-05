@@ -23,7 +23,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. OPTIONAL: Debug OIDC Token Claims (Fixed multi-line format)
+      # 2. OPTIONAL: Debug OIDC Token Claim (Fixed multi-line format)
       - name: Debug OIDC Token Claims
         run: |
           JWT=$(curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" -s "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')

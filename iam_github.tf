@@ -41,16 +41,16 @@ resource "aws_iam_role" "github_actions_role" {
 
 # 4. Attach the Inline Permissions Policy to the Role
 resource "aws_iam_role_policy" "github_actions_permissions" {
-  name   = "github-actions-terraform-permissions"
-  role   = aws_iam_role.github_actions_role.id
+  name = "github-actions-terraform-permissions"
+  role = aws_iam_role.github_actions_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "TerraformRoute53Permissions"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "TerraformRoute53Permissions"
+        Effect = "Allow"
+        Action = [
           "route53:ListHostedZones",
           "route53:GetHostedZone",
           "route53:ListResourceRecordSets"
@@ -58,18 +58,18 @@ resource "aws_iam_role_policy" "github_actions_permissions" {
         Resource = "*"
       },
       {
-        Sid      = "TerraformACMPermissions"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "TerraformACMPermissions"
+        Effect = "Allow"
+        Action = [
           "acm:DescribeCertificate",
           "acm:ListCertificates"
         ]
         Resource = "arn:aws:acm:us-east-1:298490729231:certificate/1c132f23-2f91-469d-a924-929ddc71ee8d"
       },
       {
-        Sid      = "TerraformRDSPermissions"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "TerraformRDSPermissions"
+        Effect = "Allow"
+        Action = [
           "rds:DescribeDBInstances",
           "rds:ModifyDBInstance"
         ]

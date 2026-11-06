@@ -81,9 +81,10 @@ resource "aws_iam_role_policy" "github_actions_inline_policy" {
       }
     ]
   })
-  import {
-    to = aws_iam_role.github_actions_role
-    id = "github-actions-terraform-role"
-  }
-
 }
+import {
+  to = aws_iam_role.github_actions_role
+  id = "github-actions-terraform-role"
+}
+
+

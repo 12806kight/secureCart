@@ -1,12 +1,11 @@
-
-# If the provider doesn't exist in your account yet, uncomment this to create it:
+# 1. Corrected OIDC Provider for GitHub (URL must be token.actions.githubusercontent.com)
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://githubusercontent.com"
-  client_id_list  = ["://amazonaws.com"]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1", "1c58a3a8518e8759bf075b76b750d4f2df264fcd"]
 }
 
-# 2. Create the IAM Role for GitHub Actions
+# 2. Hardened IAM Role matched tightly to your direct main pushes
 resource "aws_iam_role" "github_actions_tf" {
   name = "github-actions-terraform-role"
 
@@ -21,11 +20,10 @@ resource "aws_iam_role" "github_actions_tf" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "://githubusercontent.com:aud" = "://amazonaws.com"
-          }
-          StringLike = {
-            # Tighten security by replacing '*' with your specific GitHub Org/Repo name
-            "://githubusercontent.com:sub" = "repo:https://github.com/12806kight/secureCart:*"
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+            
+            # Fixed to use your precise decoded token value for direct pushes to main
+            "token.actions.githubusercontent.com:sub" = "repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"
           }
         }
       }
@@ -33,7 +31,7 @@ resource "aws_iam_role" "github_actions_tf" {
   })
 }
 
-# 3. Attach administrative permissions so it can manage your infrastructure
+# 3. Attach administrative permissions
 resource "aws_iam_role_policy_attachment" "tf_admin" {
   role       = aws_iam_role.github_actions_tf.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"

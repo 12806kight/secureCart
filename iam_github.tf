@@ -1,4 +1,4 @@
-# 1. Fetch your existing OIDC provider info (or define it if needed)
+# 1. Fetchs your existing OIDC provider info (or define it if needed)
 data "aws_iam_openid_connect_provider" "github" {
   arn = "arn:aws:iam::298490729231:oidc-provider/://githubusercontent.com"
 }

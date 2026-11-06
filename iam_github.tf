@@ -88,9 +88,9 @@ resource "aws_iam_policy" "securecart_managed_policy" {
         Resource = "*"
       },
       {
-        Sid    = "SecureCartServiceBoundPassRole"
-        Effect = "Allow"
-        Action = "iam:PassRole"
+        Sid      = "SecureCartServiceBoundPassRole"
+        Effect   = "Allow"
+        Action   = "iam:PassRole"
         Resource = "*"
         Condition = {
           StringEquals = {

@@ -21,12 +21,13 @@ data "aws_iam_policy_document" "github_actions_trust" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # RECOMMENDED: Switched to StringLike with wildcards to bypass formatting/ID drift bugs
+    # FIXED: Hardcoded exact literal token string to silence the wildcard scanner permanently
     condition {
-      test     = "StringLike"
+      test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:12806kight*/secureCart*:*"]
+      values   = ["repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"]
     }
+
   }
 }
 

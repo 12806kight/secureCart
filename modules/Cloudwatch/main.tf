@@ -11,7 +11,7 @@ data "aws_lb" "securecart_alb" {
 # 1. Hardened S3 Bucket
 resource "aws_s3_bucket" "alb_logs" {
   bucket        = "securecart-alb-access-logs-${data.aws_caller_identity.current.account_id}"
-  force_destroy = true 
+  force_destroy = true
 }
 
 # 2. Separate Resource to Block All Public Access
@@ -96,9 +96,9 @@ resource "aws_cloudwatch_metric_alarm" "alb_504_timeout" {
   evaluation_periods  = 1
   metric_name         = "HTTPCode_ELB_504_Count"
   namespace           = "AWS/ApplicationELB"
-  period              = 60 
+  period              = 60
   statistic           = "Sum"
-  threshold           = 1 
+  threshold           = 1
   alarm_description   = "This alarm triggers when the SecureCart ALB experiences HTTP 504 Gateway Timeouts."
   alarm_actions       = [aws_sns_topic.alb_alerts.arn]
 

@@ -1,7 +1,8 @@
 # 1. Look up the OIDC Provider using the standard URL format
 data "aws_iam_openid_connect_provider" "github" {
-  url = "https://githubusercontent.com"
+  url = "https://token.actions.githubusercontent.com"
 }
+
 
 # 2. Define the OIDC Trust Policy Document
 data "aws_iam_policy_document" "github_actions_trust" {

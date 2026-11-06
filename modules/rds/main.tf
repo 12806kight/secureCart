@@ -12,13 +12,14 @@ resource "aws_db_subnet_group" "this" {
 }
 
 resource "aws_db_instance" "rds_instance_TS" {
-  identifier            = "${var.project}-db-instance"
-  allocated_storage     = 20  # Safe maximum to stay strictly inside the AWS Free Tier (Max 30GB)
-  max_allocated_storage = 100 # Enables storage autoscaling without manual intervention
-  storage_type          = "gp3"
-  engine                = "mysql"        # Ensure this matches your port 3306 rules
-  engine_version        = "8.0"          # Declaring an explicit minor version avoids AWS API deployment errors
-  instance_class        = "db.t4g.micro" # Cost-efficient instance type
+  identifier        = "${var.project}-db-instance"
+  allocated_storage = 20    # Stays strictly inside the AWS Free Tier (Max 30GB allocated)
+  storage_type      = "gp3" # General Purpose SSD storage
+  engine            = "mysql"
+  engine_version    = "8.0"
+
+  # MODIFIED: db.t3.micro is covered under the 12-Month Free Tier (750 hours/month)
+  instance_class    = "db.t3.micro" 
 
   # Database Credentials (Injected from variables)
   db_name  = "SecureCartDB"
@@ -26,16 +27,16 @@ resource "aws_db_instance" "rds_instance_TS" {
   password = var.db_password
 
   # Networking & Virtual Firewalls
-  db_subnet_group_name = aws_db_subnet_group.this.name
-
-  # Hooks directly to the core container defined in your security group file
+  db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = [var.db_security_group_id]
 
-  publicly_accessible = false        # Enforces internal-only traffic from your app servers
-  multi_az            = var.multi_az # Managed easily via boolean toggle
+  publicly_accessible = false        
+
+  # MODIFIED: Multi-AZ is disabled to avoid immediate non-Free Tier billing charges
+  multi_az            = false 
 
   # Safety Guardrails
-  skip_final_snapshot = true # Fast teardowns for development (Set to false for real production)
+  skip_final_snapshot = true # Fast teardowns for development
 
   tags = {
     Name        = "RDS instance for our SecureCart application"

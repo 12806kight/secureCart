@@ -89,7 +89,7 @@ resource "aws_sns_topic" "alb_alerts" {
   name = "securecart-alb-alerts-topic"
 }
 
-# 7. CloudWatch Timeout Metric Alarm
+# 7. CloudWatch Timeout Metric Alarms
 resource "aws_cloudwatch_metric_alarm" "alb_504_timeout" {
   alarm_name          = "securecart-alb-504-timeout-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"

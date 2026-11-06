@@ -67,5 +67,6 @@ module "s3" {
 }
 
 module "iam_oidc" {
-  source = "./modules/iam_oidc"
+  source  = "./modules/iam_oidc"
+  project = var.project
 }

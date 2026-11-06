@@ -23,9 +23,10 @@ data "aws_iam_policy_document" "github_actions_trust" {
 
     condition {
       test     = "StringEquals"
-      variable = "://githubusercontent.com:sub"
-      values   = ["repo:12806kight/secureCart:ref:refs/heads/main"]
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"]
     }
+
   }
 }
 

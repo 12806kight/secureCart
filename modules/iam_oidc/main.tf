@@ -31,7 +31,7 @@ resource "aws_iam_role" "github_actions_tf" {
   })
 }
 
-# 3. Attach administrative permissions
+# 3. Attach administrative permission
 resource "aws_iam_role_policy_attachment" "tf_admin" {
   role       = aws_iam_role.github_actions_tf.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"

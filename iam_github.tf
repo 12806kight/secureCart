@@ -1,4 +1,4 @@
-# 1. Look up the OIDC Provider using the standard URL format
+# 1. Looks up the OIDC Provider using the standard URL format
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }

@@ -1,9 +1,9 @@
 resource "aws_launch_template" "app" {
-  name_prefix   = "${var.project}-app-template-"
-  image_id      = "ami-0e2c8caa4b6378d8c" # Canonical Ubuntu 24.04 LTS AMI for us-east-1.
-  
+  name_prefix = "${var.project}-app-template-"
+  image_id    = "ami-0e2c8caa4b6378d8c" # Canonical Ubuntu 24.04 LTS AMI for us-east-1.
+
   # ENSURE: var.instance_type defaults to "t2.micro" or "t3.micro" in variables.tf
-  instance_type = var.instance_type 
+  instance_type = var.instance_type
 
   network_interfaces {
     associate_public_ip_address = false # Keeps instances private

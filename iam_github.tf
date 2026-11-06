@@ -41,16 +41,16 @@ resource "aws_iam_role" "github_actions_role" {
 
 # 4. Define the Customer Inline Policy
 resource "aws_iam_role_policy" "github_actions_inline_policy" {
-  name   = "securecart-terraform-execution-policy"
-  role   = aws_iam_role.github_actions_role.id
+  name = "securecart-terraform-execution-policy"
+  role = aws_iam_role.github_actions_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "PipelineIAMPermissions"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "PipelineIAMPermissions"
+        Effect = "Allow"
+        Action = [
           "iam:GetOpenIDConnectProvider",
           "iam:ListRolePolicies",
           "iam:GetRolePolicy",
@@ -62,9 +62,9 @@ resource "aws_iam_role_policy" "github_actions_inline_policy" {
         Resource = "*"
       },
       {
-        Sid      = "SecureCartCoreServices"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "SecureCartCoreServices"
+        Effect = "Allow"
+        Action = [
           "autoscaling:DescribeAutoScalingGroups",
           "route53:ListHostedZones",
           "route53:GetHostedZone",

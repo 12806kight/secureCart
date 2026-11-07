@@ -45,7 +45,7 @@ resource "aws_iam_role" "github_actions_role" {
   }
 }
 
-# 4. Attach Administrative permissions so the pipeline can deploy VPC, EC2, ALB, and RDS module
+# 4. Attach Administrative permissions so the pipeline can deploy VPC, EC2, ALB, and RDS modules
 resource "aws_iam_role_policy_attachment" "pipeline_admin_attachment" {
   role       = aws_iam_role.github_actions_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"

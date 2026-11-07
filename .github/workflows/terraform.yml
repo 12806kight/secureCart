@@ -8,10 +8,9 @@ on:
     branches:
       - main
 
-# Core permission requirement for OIDC authentication
 permissions:
-  id-token: write # Required for requesting the JWT token from AWS
-  contents: read  # Required to check out the repository code
+  id-token: write 
+  contents: read  
 
 jobs:
   terraform:
@@ -23,44 +22,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. OPTIONAL: Debug OIDC Token Claim (Fixed multi-line format)
-      - name: Debug OIDC Token Claims
-        run: |
-          JWT=$(curl -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" -s "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-          echo "=== DECODED CLAIMS ==="
-          echo "$JWT" | cut -d'.' -f2 | base64 --decode | jq .
-
-      # 3. Authenticate to AWS dynamically using OIDC
+      # 2. Authenticate to AWS dynamically using OIDC (Moved to run clean first)
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::298490729231:role/github-actions-terraform-role
           aws-region: us-east-1
           audience: sts.amazonaws.com
+          output-env-credentials: true # Forces credentials to export cleanly as environment variables
 
-      # 4. Install Terraform CLI
+      # 3. Install Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
+          terraform_wrapper: false # Prevents stdout wrapping from breaking backend S3 streams
 
-      # 5. Initialize Terraform working directory
+      # 4. Initialize Terraform working directory
       - name: Terraform Init
         run: terraform init
 
-      # 6. Format validation check
+      # 5. Format validation check
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 7. Generate execution plan for all updates
+      # 6. Generate execution plan for all updates
       - name: Terraform Plan
         env:
-           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
-           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-
+          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform plan -input=false
 
-      # 8. Apply updates ONLY on a push directly to the main branch
+      # 7. Apply updates ONLY on a push directly to the main branch
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:

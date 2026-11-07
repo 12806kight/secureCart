@@ -89,6 +89,6 @@ resource "aws_iam_policy" "securecart_managed_policy" {
 # your iam_oidc subdirectory module.
 ###############################################################################
 resource "aws_iam_role_policy_attachment" "pipeline_policy_attachment" {
-  role       = module.iam_oidc.aws_iam_role.github_actions_role.name
-  policy_arn = aws_iam_policy.securecart_managed_policy.arn
+  role       = module.iam_oidc.role_name
+  policy_arn = aws_iam_policy.pipeline_policy.arn
 }

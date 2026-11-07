@@ -28,10 +28,8 @@ resource "aws_iam_role" "github_actions_role" {
           StringEquals = {
             # Must match the audience requested by aws-actions/configure-aws-credentials
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          }
-          StringLike = {
-            # Restricts role assumption specifically to your secureCart repository
-            "token.actions.githubusercontent.com:sub" = "repo:12806kight/secureCart:*"
+            # Explicitly matches your private repository parameters and branch exactly to satisfy security filters
+            "token.actions.githubusercontent.com:sub" = "repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"
           }
         }
       }

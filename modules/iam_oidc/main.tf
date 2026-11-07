@@ -41,7 +41,3 @@ resource "aws_iam_role" "github_actions_role" {
     Application = "SecureCart"
   }
 }
-import {
-  to = module.iam_oidc.aws_iam_role.github_actions_role
-  id = "github-actions-terraform-role"
-}

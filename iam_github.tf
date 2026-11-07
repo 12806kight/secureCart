@@ -1,12 +1,5 @@
 ###############################################################################
-# 1. ROOT LEVEL MODULE INSTANTIATION
-###############################################################################
-module "iam_oidc" {
-  source = "./modules/iam_oidc"
-}
-
-###############################################################################
-# 2. STATE IMPORT ALIGNMENT
+# 1. STATE IMPORT ALIGNMENT
 # Maps the role to the correct address within the module structure to stop
 # EntityAlreadyExists and destroy/recreate loops.
 ###############################################################################
@@ -16,7 +9,7 @@ import {
 }
 
 ###############################################################################
-# 3. STANDALONE CUSTOMER MANAGED POLICY
+# 2. STANDALONE CUSTOMER MANAGED POLICY
 # Full management permissions over core services, combined with comprehensive
 # IAM permissions for self-mutation, and a safe, restricted PassRole block.
 ###############################################################################
@@ -79,9 +72,9 @@ resource "aws_iam_policy" "securecart_managed_policy" {
         Condition = {
           StringEquals = {
             "iam:PassedToService" = [
-              "://amazonaws.com",
-              "://amazonaws.com",
-              "://amazonaws.com"
+              "ec2.amazonaws.com",
+              "rds.amazonaws.com",
+              "application-autoscaling.amazonaws.com"
             ]
           }
         }
@@ -91,7 +84,7 @@ resource "aws_iam_policy" "securecart_managed_policy" {
 }
 
 ###############################################################################
-# 4. POLICY TO ROLE ATTACHMENT link
+# 3. POLICY TO ROLE ATTACHMENT LINK
 # Binds the customer managed policy directly to the role instantiated inside
 # your iam_oidc subdirectory module.
 ###############################################################################

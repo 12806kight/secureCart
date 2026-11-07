@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "github_actions_trust" {
 }
 
 ###############################################################################
-# 4. THE IAM ROLE DEFINITION
+# 4. THE IAM ROLE DEFINITIONs
 # Instantiates the core pipeline role. It does NOT contain nested inline
 # policy blocks to prevent configuration drifts or duplicate resource issues.
 ###############################################################################

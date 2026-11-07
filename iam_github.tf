@@ -1,16 +1,7 @@
 # 1. Dynamically retrieve your AWS Account ID
 data "aws_caller_identity" "current" {}
 
-# 2. Configure the OIDC Provider for GitHub globally in your AWS account
-resource "aws_iam_openid_connect_provider" "github" {
-  url            = "https://githubusercontent.com"
-  client_id_list = ["sts.amazonaws.com"]
-
-  # Standard thumbprint for GitHub Actions token service
-  thumbprint_list = ["1c58a3a8518e8759bf075b76b750d4f2df264fcd"]
-}
-
-# 3. Create the IAM Role with the trust policy tailored to your workflow configuration
+# 2. Create the IAM Role with the exact-match string required for your private repository
 resource "aws_iam_role" "github_actions_role" {
   name        = "github-actions-terraform-role"
   description = "IAM Role assumed by GitHub Actions to deploy SecureCart infrastructure via OIDC"
@@ -26,9 +17,9 @@ resource "aws_iam_role" "github_actions_role" {
         }
         Condition = {
           StringEquals = {
-            # Must match the audience requested by aws-actions/configure-aws-credentials
+            # Matches the exact audience requested by your workflow step
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            # Explicitly matches your private repository parameters and branch exactly to satisfy security filters
+            # Explicitly matches your private repository parameter string to satisfy security filters
             "token.actions.githubusercontent.com:sub" = "repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"
           }
         }
@@ -43,7 +34,7 @@ resource "aws_iam_role" "github_actions_role" {
   }
 }
 
-# 4. Attach Administrative permissions so the pipeline can deploy VPC, EC2, ALB, and RDS modules
+# 3. Attach Administrative permissions so the pipeline can manage and deploy all modules
 resource "aws_iam_role_policy_attachment" "pipeline_admin_attachment" {
   role       = aws_iam_role.github_actions_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"

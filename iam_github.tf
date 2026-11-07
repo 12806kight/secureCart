@@ -3,11 +3,11 @@ data "aws_caller_identity" "current" {}
 
 # 2. Configure the OIDC Provider for GitHub globally in your AWS account
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  
+  url            = "https://githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+
   # Standard thumbprint for GitHub Actions token service
-  thumbprint_list = ["1c58a3a8518e8759bf075b76b750d4f2df264fcd"] 
+  thumbprint_list = ["1c58a3a8518e8759bf075b76b750d4f2df264fcd"]
 }
 
 # 3. Create the IAM Role with the trust policy tailored to your workflow configuration

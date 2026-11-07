@@ -114,6 +114,7 @@ resource "aws_iam_role_policy_attachment" "pipeline_policy_attachment" {
 
 # 6. Import Block to sync existing Role State smoothly
 import {
-  to = aws_iam_role.github_actions_role
+  to = module.iam_oidc.aws_iam_role.github_actions_role
   id = "github-actions-terraform-role"
 }
+

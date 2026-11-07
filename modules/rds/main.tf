@@ -16,7 +16,7 @@ resource "aws_db_instance" "rds_instance_TS" {
   allocated_storage = 20    # Stays strictly inside the AWS Free Tier (Max 30GB allocated)
   storage_type      = "gp3" # General Purpose SSD storage
   engine            = "mysql"
-  engine_version    = "8.0"
+  engine_version    = "8.4"
 
   # MODIFIED: db.t3.micro is covered under the 12-Month Free Tier (750 hours/month)
   instance_class = "db.t3.micro"

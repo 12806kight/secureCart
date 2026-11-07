@@ -90,5 +90,5 @@ resource "aws_iam_policy" "securecart_managed_policy" {
 ###############################################################################
 resource "aws_iam_role_policy_attachment" "pipeline_policy_attachment" {
   role       = module.iam_oidc.role_name
-  policy_arn = aws_iam_policy.pipeline_policy.arn
+  policy_arn = aws_iam_policy.securecart_managed_policy.arn # Fixed name from pipeline_policy
 }

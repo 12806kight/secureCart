@@ -1,22 +1,13 @@
-###############################################################################
-# 1. DYNAMIC TLS DATA SOURCE (Prevents Thumbprint Drift Failures)
-# Dynamically pulls the live SHA-1 fingerprint of GitHub's OIDC certificate
-# authority so your pipeline never breaks when GitHub rotates keys.
-###############################################################################
 data "tls_certificate" "github" {
-  url = "https://githubusercontent.com"
+  url = "https://token.actions.githubusercontent.com" # Added token.actions.
 }
 
-###############################################################################
-# 2. OPENID CONNECT IDENTITY PROVIDER
-# Explicitly uses the correct token.actions endpoint and binds the live
-# dynamic thumbprint calculated from the TLS data source above.
-###############################################################################
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://githubusercontent.com"
+  url             = "https://token.actions.githubusercontent.com" # Added token.actions.
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
 }
+
 
 ###############################################################################
 # 3. OIDC TRUST POLICY DOCUMENT

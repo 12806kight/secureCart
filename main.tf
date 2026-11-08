@@ -70,3 +70,9 @@ module "iam_oidc" {
   source  = "./modules/iam_oidc"
   project = var.project
 }
+
+module "ecr" {
+  source      = "./modules/ecr"
+  project     = var.project
+  environment = "development"
+}

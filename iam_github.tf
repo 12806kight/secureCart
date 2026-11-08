@@ -39,3 +39,33 @@ resource "aws_iam_role_policy_attachment" "pipeline_admin_attachment" {
   role       = aws_iam_role.github_actions_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
+
+# 1. Create an IAM Role for your EC2 instances to assume
+resource "aws_iam_role" "ec2_ecr_role" {
+  name = "${var.project}-ec2-ecr-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# 2. Attach the AWS-managed policy that allows pulling container images from ECR
+resource "aws_iam_role_policy_attachment" "ec2_ecr_readonly" {
+  role       = aws_iam_role.ec2_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+# 3. Create the physical Instance Profile container that wraps the role for EC2 consumption
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "${var.project}-ec2-instance-profile"
+  role = aws_iam_role.ec2_ecr_role.name
+}

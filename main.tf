@@ -40,7 +40,7 @@ module "ec2" {
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
 
-  ec2_instance_profile_name = module.iam.instance_profile_name
+  ec2_instance_profile_name = aws_iam_instance_profile.ec2_profile.name
 }
 
 module "loadBalancer" {

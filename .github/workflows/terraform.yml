@@ -4,59 +4,71 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
+# Core permission requirements for secure OIDC handshakes and code checkouts
 permissions:
-  id-token: write 
-  contents: read  
+  id-token: write # Required for requesting the dynamic JWT token from AWS
+  contents: read  # Required to check out your repository code securely
 
 jobs:
-  terraform:
-    name: "Terraform Execution"
-    runs-on: ubuntu-24.04
+  terraform-and-deploy:
+    name: "Provision & Containerize"
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_REGION: "us-east-1"
+      AWS_ROLE_ARN: "arn:aws:iam::298490729231:role/github-actions-terraform-role"
+      ECR_REGISTRY: "298490729231.dkr.ecr.us-east-1.amazonaws.com"
+      ECR_REPOSITORY: "securecart-app"
 
     steps:
-      # 1. Check out the source code
+      # 1. Pull down repository source code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Authenticate to AWS dynamically using OIDC (Moved to run clean first)
+      # 2. Authenticate to AWS dynamically using verified OIDC Trust Parameters
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::298490729231:role/github-actions-terraform-role
-          aws-region: us-east-1
-          audience: sts.amazonaws.com
-          output-env-credentials: true # Forces credentials to export cleanly as environment variables
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          audience: "sts.amazonaws.com"
 
-      # 3. Install Terraform CLI
+      # 3. Setup HashiCorp Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
-          terraform_wrapper: false # Prevents stdout wrapping from breaking backend S3 streams
 
-      # 4. Initialize Terraform working directory
+      # 4. Initialize working backend modules and tracking layers
       - name: Terraform Init
         run: terraform init
 
-      # 5. Format validation check
+      # 5. Format validation sanity check
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 6. Generate execution plan for all updates
+      # 6. Generate precise execution blueprints
       - name: Terraform Plan
-        env:
-          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform plan -input=false
 
-      # 7. Apply updates ONLY on a push directly to the main branch
+      # 7. Apply structural upgrades (Runs safely on push to main branch)
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        env:
-          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
         run: terraform apply -auto-approve -input=false
+
+      # 8. Log into private Amazon ECR Registry using your OIDC context
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 9. Compile Docker layers and push container images to your ECR Module
+      - name: Build, Tag, and Push Docker Image to ECR
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Build the container using the git SHA and the latest tag pointers
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest .
+          
+          # Push both tags up to your registry to automatically trigger the ECR vulnerability scans
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest

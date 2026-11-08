@@ -22,7 +22,7 @@ resource "aws_lb_target_group" "app_tg" {
 
   health_check {
     enabled             = true
-    path                = "/"
+    path                = "/health" # UPDATED: Pointing to your server.js health check endpoint
     port                = "8080"
     protocol            = "HTTP"
     interval            = 30

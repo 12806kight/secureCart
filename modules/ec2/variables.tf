@@ -29,3 +29,8 @@ variable "alb_target_group_arn" {
   description = "The ARN of the ALB target group for the Auto Scaling Group"
 }
 
+# Added to support ECR authentication inside your Launch Template configuration
+variable "ec2_instance_profile_name" {
+  type        = string
+  description = "The name of the IAM instance profile providing ECR read-only access to EC2 instances"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "securecart-app",
+  "version": "1.0.0",
+  "description": "SecureCart application container",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

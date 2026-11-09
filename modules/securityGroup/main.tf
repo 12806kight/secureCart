@@ -1,6 +1,6 @@
 # 1. Application Load Balancer Security Group (Public facing)
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.project}-alb-sg"
+  name        = "${var.project}-alb-sg-v2"
   description = "Controls public web traffic to the Application Load Balancer"
   vpc_id      = var.vpc_id
 

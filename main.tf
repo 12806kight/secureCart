@@ -17,8 +17,6 @@ module "rds" {
 
   project              = var.project
   db_security_group_id = module.securityGroup.db_sg_id
-  db_username          = var.db_username
-  db_password          = var.db_password
   multi_az             = var.multi_az
 
   # References the outputs exported by the VPC module block above

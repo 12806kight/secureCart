@@ -14,11 +14,11 @@ resource "aws_lb" "securecart_alb" {
 }
 
 resource "aws_lb_target_group" "app_tg" {
-  name        = "${var.project}-target-group-v3"
-  port        = 8080
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "instance"
+  # ... other settings ...
+  port     = 8080 # MUST match the port specified in your security group!
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
 
   health_check {
     enabled             = true

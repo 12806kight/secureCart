@@ -32,12 +32,10 @@ module "ec2" {
   # ADD THIS LINE BACK: Passes the VPC ID down as required by your ec2/variables.tf file
   vpc_id = module.vpc.vpc_id
 
-  # Passes your application tier firewall group
   app_security_group_id = module.securityGroup.app_sg_id
 
-  # Connects your ALB target group output
+  # FIXED: Matches the exact output block name in modules/loadBalancer/outputs.tf
   alb_target_group_arn = module.loadBalancer.target_group_arn
-
 
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
@@ -52,9 +50,10 @@ module "loadBalancer" {
   project = var.project
   vpc_id  = module.vpc.vpc_id
 
+  certificate_arn   = aws_acm_certificate_validation.cert.certificate_arn
+  public_subnet_ids = [module.vpc.public_subnet_a_id, module.vpc.public_subnet_b_id]
+
   alb_security_group_id = module.securityGroup.alb_sg_id
-  certificate_arn       = aws_acm_certificate_validation.cert.certificate_arn
-  public_subnet_ids     = [module.vpc.public_subnet_a_id, module.vpc.public_subnet_b_id]
 }
 
 module "waf" {

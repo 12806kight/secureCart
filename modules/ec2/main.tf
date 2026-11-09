@@ -4,7 +4,6 @@ resource "aws_launch_template" "app" {
 
   instance_type = var.instance_type
 
-  # Attaches the required IAM profile so the host can pull layers from ECR
   iam_instance_profile {
     name = var.ec2_instance_profile_name
   }
@@ -14,38 +13,45 @@ resource "aws_launch_template" "app" {
     security_groups             = [var.app_security_group_id]
   }
 
-  # Boostraps Docker, pulls your ECR image, and injects your runtime environment variables
   user_data = base64encode(<<-EOF
               #!/bin/bash
+              # Redirect all output to a log file so you can inspect it if needed
+              exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+              
               export DEBIAN_FRONTEND=noninteractive
               
-              # 1. Install Docker runtime layers on the Ubuntu host machine
+              # 1. Install Docker runtime layers AND jq on the Ubuntu host machine
               apt-get update -y
-              apt-get install -y docker.io unzip jq
-              
-              # 2. Install the AWS CLI tool required for parameter resolution
-              curl "https://amazonaws.com" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              ./aws/install
+              apt-get install -y docker.io unzip jq curl
               
               systemctl start docker
               systemctl enable docker
 
+              # 2. FIXED: Pointing to the real official AWS CLI v2 installation package URL
+              curl "https://amazonaws.com" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
+
               # 3. Authenticate securely to your private container registry
               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 298490729231.dkr.ecr.us-east-1.amazonaws.com
+              
+              # 4. FIXED: Pointing to your explicit container repository path
               docker pull ://amazonaws.com
 
-              # 4. Fetch parameters securely from SSM at instance boot time into ephemeral shells memory
-              FETCH_HOST=$(aws ssm get-parameter --name "/securecart/dev/db_host" --region us-east-1 --query "Parameter.Value" --output text)
-              FETCH_USER=$(aws ssm get-parameter --name "/securecart/dev/db_user" --region us-east-1 --query "Parameter.Value" --output text)
-              FETCH_PASS=$(aws ssm get-parameter --name "/securecart/dev/db_password" --with-decryption --region us-east-1 --query "Parameter.Value" --output text)
+              # 5. Fetch parameter configurations securely from SSM Store
+              FETCH_HOST=$(aws ssm get-parameter --name "/securecart/db/host" --region us-east-1 --query "Parameter.Value" --output text)
+              FETCH_USER=$(aws ssm get-parameter --name "/securecart/db/username" --region us-east-1 --query "Parameter.Value" --output text)
+              FETCH_SECRET_ARN=$(aws ssm get-parameter --name "/securecart/db/password_secret_arn" --region us-east-1 --query "Parameter.Value" --output text)
 
-              # 5. Boot the container passing the dynamically resolved local shell parameters
+              # 6. Query Secrets Manager using the dynamic ARN metadata and parse cleanly via jq
+              FETCH_REAL_PASS=$(aws secretsmanager get-secret-value --secret-id "$FETCH_SECRET_ARN" --region us-east-1 --query "SecretString" --output text | jq -r '.password')
+
+              # 7. FIXED: Passing your real private ECR registry image to the runner
               docker run -d \
                 -p 8080:8080 \
                 -e DB_HOST="$FETCH_HOST" \
                 -e DB_USER="$FETCH_USER" \
-                -e DB_PASSWORD="$FETCH_PASS" \
+                -e DB_PASSWORD="$FETCH_REAL_PASS" \
                 -e DB_NAME="SecureCartDB" \
                 --name securecart-service \
                 --restart always \
@@ -60,33 +66,5 @@ resource "aws_launch_template" "app" {
   tags = {
     Name        = "${var.project}-launch-template"
     Environment = "development"
-  }
-}
-
-resource "aws_launch_template" "this" {}
-
-resource "aws_autoscaling_group" "app_asg" {
-  name_prefix         = "${var.project}-asg-"
-  vpc_zone_identifier = var.private_subnet_ids
-
-  desired_capacity = 1
-  min_size         = 1
-  max_size         = 1
-
-  target_group_arns = [var.alb_target_group_arn]
-
-  launch_template {
-    id      = aws_launch_template.app.id
-    version = "$Latest"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "${var.project}-app-server"
-    propagate_at_launch = true
   }
 }

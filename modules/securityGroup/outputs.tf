@@ -1,14 +1,14 @@
-output "db_sg_id" {
-  description = "The isolated ID of the database security group container"
-  value       = aws_security_group.db_sg.id
+output "alb_sg_id" {
+  description = "The ID of the Application Load Balancer security group"
+  value       = aws_security_group.alb_sg.id
 }
 
 output "app_sg_id" {
-  description = "Exposes the app server security group container ID"
-  value       = aws_security_group.app_sg.id
+  description = "The ID of the application server security group"
+  value       = aws_security_group.SCapp_sg.id # Updated to match main.tf resource name
 }
 
-output "alb_sg_id" {
-  description = "Exposes the ALB Security Group"
-  value       = aws_security_group.alb_sg.id
+output "db_sg_id" {
+  description = "The ID of the database tier security group"
+  value       = aws_security_group.rds_sg.id # Updated to match main.tf resource name
 }

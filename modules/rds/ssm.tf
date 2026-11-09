@@ -15,6 +15,5 @@ resource "aws_ssm_parameter" "db_user" {
 resource "aws_ssm_parameter" "db_pass" {
   name        = "/securecart/dev/db_password"
   type        = "SecureString" # Encrypts the password natively using AWS KMS for free
-  value       = var.db_password
   description = "SecureCart database administrative password"
 }

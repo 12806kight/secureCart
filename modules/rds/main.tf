@@ -18,10 +18,10 @@ resource "aws_db_instance" "rds_instance_TS" {
   engine_version    = "8.4"
   instance_class    = "db.t3.micro"
 
-  db_name  = "SecureCartDB"
-  
+  db_name = "SecureCartDB"
+
   # 1. Provide the username string natively
-  username = "db_admin" 
+  username = "db_admin"
 
   # 2. Force AWS to natively generate the secret container and the password
   manage_master_user_password   = true

@@ -12,3 +12,4 @@ output "db_sg_id" {
   description = "The ID of the database tier security group"
   value       = aws_security_group.rds_sg.id # Updated to match main.tf resource name
 }
+

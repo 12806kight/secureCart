@@ -30,20 +30,22 @@ module "ec2" {
   source = "./modules/ec2"
 
   project = var.project
-
-  # REMOVED: vpc_id (No longer required or declared in the refactored modules/ec2/variables.tf)
+  
+  # ADD THIS LINE BACK: Passes the VPC ID down as required by your ec2/variables.tf file
+  vpc_id  = module.vpc.vpc_id
 
   # Passes your application tier firewall group
   app_security_group_id = module.securityGroup.app_sg_id
-
-  # FIXED: Updated to reference the precise target group output string from your ALB module
-  alb_target_group_arn = module.loadBalancer.alb_target_group_arn
+  
+  # Connects your ALB target group output
+  alb_target_group_arn  = module.loadBalancer.alb_target_group_arn
 
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
 
   ec2_instance_profile_name = aws_iam_instance_profile.ec2_profile.name
 }
+
 
 module "loadBalancer" {
   source = "./modules/loadBalancer"

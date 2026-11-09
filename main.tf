@@ -30,15 +30,15 @@ module "ec2" {
   source = "./modules/ec2"
 
   project = var.project
-  
+
   # ADD THIS LINE BACK: Passes the VPC ID down as required by your ec2/variables.tf file
-  vpc_id  = module.vpc.vpc_id
+  vpc_id = module.vpc.vpc_id
 
   # Passes your application tier firewall group
   app_security_group_id = module.securityGroup.app_sg_id
-  
+
   # Connects your ALB target group output
-  alb_target_group_arn  = module.loadBalancer.alb_target_group_arn
+  alb_target_group_arn = module.loadBalancer.alb_target_group_arn
 
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]

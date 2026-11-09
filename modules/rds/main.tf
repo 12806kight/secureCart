@@ -1,3 +1,15 @@
+resource "aws_db_subnet_group" "this" {
+  name        = "${var.project}-rds-subnet-group"
+  description = "Isolated private subnet group for the SecureCart database tier"
+  subnet_ids  = [var.private_subnet_a_id, var.private_subnet_b_id]
+
+  tags = {
+    Name        = "${var.project}-rds-subnet-group"
+    Environment = "development"
+  }
+}
+
+
 resource "aws_db_instance" "rds_instance_TS" {
   identifier        = "${var.project}-db-instance"
   allocated_storage = 20

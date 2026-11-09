@@ -1,29 +1,29 @@
 resource "aws_launch_template" "app" {
   name_prefix = "${var.project}-app-template-"
-  image_id    = "ami-0e2c8caa4b6378d8c" # Canonical Ubuntu 24.04 LTS AMI for us-east-1.
+  image_id    = "ami-0e2c8caa4b6378d8c" # Canonical Ubuntu 24.04 LTS AMI
 
   instance_type = var.instance_type
 
-  # Crucial: Attaches the IAM profile required to authenticate and pull from ECR
+  # Attaches the required IAM profile so the host can pull layers from ECR
   iam_instance_profile {
     name = var.ec2_instance_profile_name
   }
 
   network_interfaces {
-    associate_public_ip_address = false # Keeps instances private
+    associate_public_ip_address = false # Keeps instances secure in private subnets
     security_groups             = [var.app_security_group_id]
   }
 
-  # Updated User Data to install Docker, log into ECR, and run your container image
+  # Boostraps Docker, pulls your ECR image, and injects your runtime environment variables
   user_data = base64encode(<<-EOF
               #!/bin/bash
               export DEBIAN_FRONTEND=noninteractive
               
-              # 1. Update packages and install Docker on the Ubuntu host machine
+              # 1. Install Docker runtime layers on the Ubuntu host
               apt-get update -y
               apt-get install -y docker.io unzip
               
-              # 2. Install the AWS CLI tool required for token authentication
+              # 2. Install the AWS CLI tool required for token authentication handshakes
               curl "https://amazonaws.com" -o "awscliv2.zip"
               unzip awscliv2.zip
               ./aws/install
@@ -31,13 +31,17 @@ resource "aws_launch_template" "app" {
               systemctl start docker
               systemctl enable docker
 
-              # 3. Log into your private Amazon ECR Registry dynamically using the host's IAM context
+              # 3. Authenticate to your private ECR endpoint using the host IAM metadata role
               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 298490729231.dkr.ecr.us-east-1.amazonaws.com
 
-              # 4. Pull and boot up the latest version of your SecureCart container application
+              # 4. Pull and run the latest version of your SecureCart application image container
               docker pull ://amazonaws.com
               docker run -d \
                 -p 8080:8080 \
+                -e DB_HOST="${var.db_host_address}" \
+                -e DB_USER="${var.db_username}" \
+                -e DB_PASSWORD="${var.db_password}" \
+                -e DB_NAME="SecureCartDB" \
                 --name securecart-service \
                 --restart always \
                 ://amazonaws.com

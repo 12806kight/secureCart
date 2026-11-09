@@ -19,11 +19,11 @@ resource "aws_launch_template" "app" {
               #!/bin/bash
               export DEBIAN_FRONTEND=noninteractive
               
-              # 1. Install Docker runtime layers on the Ubuntu host
+              # 1. Install Docker runtime layers on the Ubuntu host machine
               apt-get update -y
-              apt-get install -y docker.io unzip
+              apt-get install -y docker.io unzip jq
               
-              # 2. Install the AWS CLI tool required for token authentication handshakes
+              # 2. Install the AWS CLI tool required for parameter resolution
               curl "https://amazonaws.com" -o "awscliv2.zip"
               unzip awscliv2.zip
               ./aws/install
@@ -31,16 +31,21 @@ resource "aws_launch_template" "app" {
               systemctl start docker
               systemctl enable docker
 
-              # 3. Authenticate to your private ECR endpoint using the host IAM metadata role
+              # 3. Authenticate securely to your private container registry
               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 298490729231.dkr.ecr.us-east-1.amazonaws.com
-
-              # 4. Pull and run the latest version of your SecureCart application image container
               docker pull ://amazonaws.com
+
+              # 4. Fetch parameters securely from SSM at instance boot time into ephemeral shell memory
+              FETCH_HOST=$(aws ssm get-parameter --name "/securecart/dev/db_host" --region us-east-1 --query "Parameter.Value" --output text)
+              FETCH_USER=$(aws ssm get-parameter --name "/securecart/dev/db_user" --region us-east-1 --query "Parameter.Value" --output text)
+              FETCH_PASS=$(aws ssm get-parameter --name "/securecart/dev/db_password" --with-decryption --region us-east-1 --query "Parameter.Value" --output text)
+
+              # 5. Boot the container passing the dynamically resolved local shell parameters
               docker run -d \
                 -p 8080:8080 \
-                -e DB_HOST="${var.db_host_address}" \
-                -e DB_USER="${var.db_username}" \
-                -e DB_PASSWORD="${var.db_password}" \
+                -e DB_HOST="$FETCH_HOST" \
+                -e DB_USER="$FETCH_USER" \
+                -e DB_PASSWORD="$FETCH_PASS" \
                 -e DB_NAME="SecureCartDB" \
                 --name securecart-service \
                 --restart always \

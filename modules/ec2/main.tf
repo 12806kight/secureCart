@@ -66,7 +66,7 @@ resource "aws_autoscaling_group" "app_asg" {
 
   desired_capacity = 1
   min_size         = 1
-  max_size         = 1 
+  max_size         = 1
 
   target_group_arns = [var.alb_target_group_arn]
 

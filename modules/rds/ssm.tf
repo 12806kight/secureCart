@@ -6,10 +6,19 @@ resource "aws_ssm_parameter" "db_host" {
 }
 
 resource "aws_ssm_parameter" "db_user" {
-  name        = "/securecart/dev/db_user"
+  name        = "/securecart/db/username"
   type        = "String"
-  value       = var.db_username
-  description = "SecureCart database administrative username"
+  
+  # GOLD STANDARD: Pulls the value dynamically from the active RDS resource metadata.
+  # No plaintext credential strings live in your code or your Git repository!
+  value       = aws_db_instance.rds_instance_TS.username
+  
+  description = "The database administrator master username"
+
+  tags = {
+    Environment = "development"
+    Project     = var.project
+  }
 }
 
 resource "aws_ssm_parameter" "db_pass" {

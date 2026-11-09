@@ -35,7 +35,7 @@ resource "aws_launch_template" "app" {
               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 298490729231.dkr.ecr.us-east-1.amazonaws.com
               docker pull ://amazonaws.com
 
-              # 4. Fetch parameters securely from SSM at instance boot time into ephemeral shell memory
+              # 4. Fetch parameters securely from SSM at instance boot time into ephemeral shells memory
               FETCH_HOST=$(aws ssm get-parameter --name "/securecart/dev/db_host" --region us-east-1 --query "Parameter.Value" --output text)
               FETCH_USER=$(aws ssm get-parameter --name "/securecart/dev/db_user" --region us-east-1 --query "Parameter.Value" --output text)
               FETCH_PASS=$(aws ssm get-parameter --name "/securecart/dev/db_password" --with-decryption --region us-east-1 --query "Parameter.Value" --output text)

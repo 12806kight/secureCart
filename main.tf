@@ -21,7 +21,6 @@ module "rds" {
   db_password          = var.db_password
   multi_az             = var.multi_az
 
-
   # References the outputs exported by the VPC module block above
   private_subnet_a_id = module.vpc.private_subnet_a_id
   private_subnet_b_id = module.vpc.private_subnet_b_id
@@ -31,11 +30,14 @@ module "ec2" {
   source = "./modules/ec2"
 
   project = var.project
-  vpc_id  = module.vpc.vpc_id
+  
+  # REMOVED: vpc_id (No longer required or declared in the refactored modules/ec2/variables.tf)
 
   # Passes your application tier firewall group
   app_security_group_id = module.securityGroup.app_sg_id
-  alb_target_group_arn  = module.loadBalancer.target_group_arn
+  
+  # FIXED: Updated to reference the precise target group output string from your ALB module
+  alb_target_group_arn  = module.loadBalancer.alb_target_group_arn
 
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
@@ -78,4 +80,3 @@ module "ecr" {
   project     = var.project
   environment = "development"
 }
-

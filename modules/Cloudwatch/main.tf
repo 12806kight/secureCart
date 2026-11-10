@@ -4,10 +4,6 @@ provider "aws" {
 
 data "aws_caller_identity" "current" {}
 
-data "aws_lb" "securecart_alb" {
-  name = "securecart-alb"
-}
-
 # 1. Hardened S3 Bucket
 resource "aws_s3_bucket" "alb_logs" {
   bucket        = "securecart-alb-access-logs-${data.aws_caller_identity.current.account_id}"
@@ -103,6 +99,6 @@ resource "aws_cloudwatch_metric_alarm" "alb_504_timeout" {
   alarm_actions       = [aws_sns_topic.alb_alerts.arn]
 
   dimensions = {
-    LoadBalancer = data.aws_lb.securecart_alb.arn_suffix
-  }
+  LoadBalancer = aws_lb.securecart_alb.arn_suffix
+}
 }

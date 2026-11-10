@@ -48,19 +48,17 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 6. Generate precise execution blueprints passing encrypted secrets securely
-      - name: Terraform Plan
-        env:
-          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+            - name: Terraform Plan
         run: terraform plan -input=false
-
-      # 7. Apply structural upgrades (Runs safely on push to main branch)
-      - name: Terraform Apply
         env:
-          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
-          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
+          # Automatically hydrates var.cloudfront_secret_token behind the scenes
+          TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
+        env:
+          TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
 
       # 8. Log into private Amazon ECR Registry using your OIDC contexts
       - name: Login to Amazon ECR

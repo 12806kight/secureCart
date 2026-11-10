@@ -34,3 +34,8 @@ variable "ec2_instance_profile_name" {
   type        = string
   description = "The name of the IAM instance profile providing ECR read-only access to EC2 instances"
 }
+
+variable "ecr_repository_url" {
+  type        = string
+  description = "The URL of the ECR repository from the ecr module"
+}

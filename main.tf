@@ -42,6 +42,7 @@ module "ec2" {
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
 
   ec2_instance_profile_name = aws_iam_instance_profile.ec2_profile.name
+  ecr_repository_url        = module.ecr.repository_url
 }
 
 

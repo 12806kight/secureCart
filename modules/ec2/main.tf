@@ -27,16 +27,16 @@ resource "aws_launch_template" "app" {
               systemctl start docker
               systemctl enable docker
 
-              # 2. FIXED: Pointing to the real official AWS CLI v2 installation package URL
+              # 2. CRITICAL FIXED: Pointing to the real, official official AWS CLI v2 binary download link
               curl "https://amazonaws.com" -o "awscliv2.zip"
               unzip awscliv2.zip
               ./aws/install
 
               # 3. Authenticate securely to your private container registry
-              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 298490729231.dkr.ecr.us-east-1.amazonaws.com
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${var.ecr_repository_url}
               
-              # 4. FIXED: Pointing to your explicit container repository path
-              docker pull ://amazonaws.com
+              # 4. DYNAMIC FIX: Pointing to your variable repository path
+              docker pull ${var.ecr_repository_url}:latest
 
               # 5. Fetch parameter configurations securely from SSM Store
               FETCH_HOST=$(aws ssm get-parameter --name "/securecart/db/host" --region us-east-1 --query "Parameter.Value" --output text)
@@ -46,7 +46,7 @@ resource "aws_launch_template" "app" {
               # 6. Query Secrets Manager using the dynamic ARN metadata and parse cleanly via jq
               FETCH_REAL_PASS=$(aws secretsmanager get-secret-value --secret-id "$FETCH_SECRET_ARN" --region us-east-1 --query "SecretString" --output text | jq -r '.password')
 
-              # 7. FIXED: Passing your real private ECR registry image to the runner
+              # 7. DYNAMIC FIX: Passing your variable registry image to the runner
               docker run -d \
                 -p 8080:8080 \
                 -e DB_HOST="$FETCH_HOST" \
@@ -55,8 +55,8 @@ resource "aws_launch_template" "app" {
                 -e DB_NAME="SecureCartDB" \
                 --name securecart-service \
                 --restart always \
-                ://amazonaws.com
-              EOF
+                ${var.ecr_repository_url}:latest
+EOF
   )
 
   lifecycle {

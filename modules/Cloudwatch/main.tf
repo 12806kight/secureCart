@@ -99,6 +99,6 @@ resource "aws_cloudwatch_metric_alarm" "alb_504_timeout" {
   alarm_actions       = [aws_sns_topic.alb_alerts.arn]
 
   dimensions = {
-  LoadBalancer = aws_lb.securecart_alb.arn_suffix
-}
+    LoadBalancer = aws_lb.securecart_alb.arn_suffix
+  }
 }

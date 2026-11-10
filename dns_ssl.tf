@@ -51,17 +51,19 @@ resource "aws_acm_certificate_validation" "cert" {
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
-###############################################################################
-# 5. ROUTE TRAFFIC FROM THE DOMAIN STRAIGHT TO YOUR ALB
-###############################################################################
 resource "aws_route53_record" "apex" {
   zone_id = data.aws_route53_zone.primary.zone_id
   name    = "securetestkight.com"
   type    = "A"
 
   alias {
-    name                   = module.loadBalancer.alb_dns_name
-    zone_id                = module.loadBalancer.alb_zone_id # Adjust this path to match your root module's ALB output path
-    evaluate_target_health = true
+    # 1. Point to your new CloudFront module output domain name
+    name = module.cloudfront.cloudfront_domain_name
+
+    # 2. Point to your CloudFront module output hosted zone ID
+    zone_id = module.cloudfront.cloudfront_hosted_zone_id
+
+    # CloudFront handles health evaluation globally at edge nodes natively
+    evaluate_target_health = false
   }
 }

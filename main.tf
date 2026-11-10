@@ -77,3 +77,12 @@ module "ecr" {
   project     = var.project
   environment = "development"
 }
+
+module "cloudfront" {
+  source                  = "./modules/cloudfront"
+  project                 = var.project
+  alb_dns_name            = module.loadBalancer.alb_dns_name
+  acm_certificate_arn     = aws_acm_certificate.securecart_cert.arn # Must be in us-east-1
+  cloudfront_secret_token = var.cloudfront_secret_token
+}
+

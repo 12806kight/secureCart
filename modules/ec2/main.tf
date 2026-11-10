@@ -68,3 +68,29 @@ resource "aws_launch_template" "app" {
     Environment = "development"
   }
 }
+resource "aws_autoscaling_group" "app_asg" {
+  name_prefix         = "${var.project}-asg-"
+  desired_capacity    = 2
+  max_size            = 4
+  min_size            = 1
+  vpc_zone_identifier = var.private_subnet_ids
+
+  launch_template {
+    id      = aws_launch_template.app.id
+    version = "$Latest"
+  }
+
+  target_group_arns = [var.alb_target_group_arn]
+
+  # Enables the ASG to safely substitute infrastructure under traffic
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  # This forces instances to inherit naming conventions automatically
+  tag {
+    key                 = "Name"
+    value               = "${var.project}-app-instance"
+    propagate_at_launch = true
+  }
+}

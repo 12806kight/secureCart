@@ -32,11 +32,12 @@ module "ec2" {
   # ADD THIS LINE BACK: Passes the VPC ID down as required by your ec2/variables.tf file
   vpc_id = module.vpc.vpc_id
 
+  # FIXED LINE 36: Point to app_sg_id
   app_security_group_id = module.securityGroup.app_sg_id
 
-  # FIXED: Matches the exact output block name in modules/loadBalancer/outputs.tf
+  # FIXED LINE 40: Matches the exact output block name in modules/loadBalancer/outputs.tf
   alb_target_group_arn = module.loadBalancer.target_group_arn
-
+  
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
 

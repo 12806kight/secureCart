@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
   }
 
   // Fallback serving a simple message
-  res.writeHead(200, { 'Content-Type': 'text/html' });
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
   res.end('<h1>🛒 Welcome to SecureCart</h1><p>Application tier successfully running inside Docker!</p>');
 });
 

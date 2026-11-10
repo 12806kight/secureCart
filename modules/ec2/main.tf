@@ -13,40 +13,49 @@ resource "aws_launch_template" "app" {
     security_groups             = [var.app_security_group_id]
   }
 
-  user_data = base64encode(<<-EOF
+    user_data = base64encode(<<-EOF
               #!/bin/bash
               # Redirect all output to a log file so you can inspect it if needed
               exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
               
               export DEBIAN_FRONTEND=noninteractive
               
-              # 1. Install Docker runtime layers AND jq on the Ubuntu host machine
+              # 1. Install system utilities and python/pip dependencies
               apt-get update -y
-              apt-get install -y docker.io unzip jq curl
+              apt-get install -y jq curl unzip python3-pip python3-venv
+
+              # 2. Install the AWS CLI tool via Pip to bypass missing apt candidates
+              python3 -m venv /opt/awscli-env
+              /opt/awscli-env/bin/pip install --upgrade pip setuptools wheel
+              /opt/awscli-env/bin/pip install awscli
+              ln -s /opt/awscli-env/bin/aws /usr/local/bin/aws
+
+              # 3. Install Docker cleanly via the modern Ubuntu noble repository paths
+              apt-get install -y docker.io-dfsg || apt-get install -y containerd
               
+              # Fallback if standard docker naming conventions differ
+              if ! command -v docker &> /dev/null; then
+                apt-get install -y docker-clean
+              fi
+
               systemctl start docker
               systemctl enable docker
 
-              # 2. CRITICAL FIXED: Pointing to the real, official official AWS CLI v2 binary download link
-              curl "https://amazonaws.com" -o "awscliv2.zip"
-              unzip awscliv2.zip
-              ./aws/install
-
-              # 3. Authenticate securely to your private container registry
+              # 4. Authenticate securely to your private container registry
               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${var.ecr_repository_url}
               
-              # 4. DYNAMIC FIX: Pointing to your variable repository path
+              # 5. DYNAMIC FIX: Pointing to your variable repository path
               docker pull ${var.ecr_repository_url}:latest
 
-              # 5. Fetch parameter configurations securely from SSM Store
-              FETCH_HOST=$(aws ssm get-parameter --name "/securecart/db/host" --region us-east-1 --query "Parameter.Value" --output text)
+              # 6. FIXED MATCH: Matches your exact aws_ssm_parameter.db_host path name configuration
+              FETCH_HOST=$(aws ssm get-parameter --name "/securecart/dev/db_host" --region us-east-1 --query "Parameter.Value" --output text)
               FETCH_USER=$(aws ssm get-parameter --name "/securecart/db/username" --region us-east-1 --query "Parameter.Value" --output text)
               FETCH_SECRET_ARN=$(aws ssm get-parameter --name "/securecart/db/password_secret_arn" --region us-east-1 --query "Parameter.Value" --output text)
 
-              # 6. Query Secrets Manager using the dynamic ARN metadata and parse cleanly via jq
+              # 7. Query Secrets Manager using the dynamic ARN metadata and parse cleanly via jq
               FETCH_REAL_PASS=$(aws secretsmanager get-secret-value --secret-id "$FETCH_SECRET_ARN" --region us-east-1 --query "SecretString" --output text | jq -r '.password')
 
-              # 7. DYNAMIC FIX: Passing your variable registry image to the runner
+              # 8. DYNAMIC FIX: Passing your variable registry image to the runner
               docker run -d \
                 -p 8080:8080 \
                 -e DB_HOST="$FETCH_HOST" \
@@ -68,6 +77,7 @@ EOF
     Environment = "development"
   }
 }
+
 resource "aws_autoscaling_group" "app_asg" {
   name_prefix         = "${var.project}-asg-"
   desired_capacity    = 2

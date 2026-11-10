@@ -37,7 +37,7 @@ module "ec2" {
 
   # FIXED LINE 40: Matches the exact output block name in modules/loadBalancer/outputs.tf
   alb_target_group_arn = module.loadBalancer.target_group_arn
-  
+
   # Collects both private subnets into a single configuration list for the ASG
   private_subnet_ids = [module.vpc.private_subnet_a_id, module.vpc.private_subnet_b_id]
 

@@ -16,3 +16,9 @@ variable "multi_az" {
   type        = bool
   default     = false
 }
+
+variable "cloudfront_secret_token" {
+  type        = string
+  description = "Custom secret token injected into headers to authenticate CloudFront traffic at the ALB"
+  sensitive   = true
+}

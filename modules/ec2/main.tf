@@ -13,7 +13,7 @@ resource "aws_launch_template" "app" {
     security_groups             = [var.app_security_group_id]
   }
 
-    user_data = base64encode(<<-EOF
+  user_data = base64encode(<<-EOF
               #!/bin/bash
               # Redirect all output to a log file so you can inspect it if needed
               exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1

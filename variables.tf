@@ -9,8 +9,6 @@ variable "project" {
   default = "securecart"
 }
 
-
-
 variable "multi_az" {
   description = "Specifies if the RDS instance is multi-AZ"
   type        = bool

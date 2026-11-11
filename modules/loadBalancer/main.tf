@@ -53,15 +53,46 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# 1. Declare the secret token variable in your ALB module (e.g., alb/variables.tf)
+variable "cloudfront_secret_token" {
+  description = "Secret header value sent by CloudFront to authenticate origin requests"
+  type        = string
+  sensitive   = true
+}
+
+# 2. Update the HTTPS listener to block direct traffic by default
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.securecart_alb.arn
   port              = "443"
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06" # Fixed missing '-2-' in policy string
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.certificate_arn
 
   default_action {
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Access Denied: Direct ALB access is forbidden."
+      status_code  = "403"
+    }
+  }
+}
+
+# 3. Allow traffic ONLY when CloudFront sends the matching custom header
+resource "aws_lb_listener_rule" "allow_cloudfront" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 100
+
+  action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app_tg.arn
+  }
+
+  condition {
+    http_header {
+      http_header_name = "X-Custom-SecureCart-Token"
+      values           = [var.cloudfront_secret_token]
+    }
   }
 }

@@ -55,7 +55,7 @@ module "loadBalancer" {
   certificate_arn   = aws_acm_certificate_validation.cert.certificate_arn
   public_subnet_ids = [module.vpc.public_subnet_a_id, module.vpc.public_subnet_b_id]
 
-  alb_security_group_id = module.securityGroup.alb_sg_id
+  alb_security_group_id   = module.securityGroup.alb_sg_id
   cloudfront_secret_token = var.cloudfront_secret_token
 }
 

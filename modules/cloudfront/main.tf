@@ -4,6 +4,9 @@ resource "aws_cloudfront_distribution" "this" {
   comment         = "CloudFront Distribution for ${var.project}"
   price_class     = "PriceClass_100" # Free Tier optimal (US/Europe edge locations)
 
+  # Add this line (or use a variable like var.domain_aliases)
+  aliases         = ["securetestkight.com"]
+
   origin {
     domain_name = var.alb_dns_name
     origin_id   = "ALB-${var.project}"

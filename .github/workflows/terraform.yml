@@ -5,10 +5,9 @@ on:
     branches:
       - main
 
-# Core permission requirements for secure OIDC handshakes and code checkouts
 permissions:
-  id-token: write # Required for requesting the dynamic JWT token from AWS
-  contents: read  # Required to check out your repository code securely
+  id-token: write
+  contents: read
 
 jobs:
   terraform-and-deploy:
@@ -22,11 +21,9 @@ jobs:
       ECR_REPOSITORY: "securecart-app"
 
     steps:
-      # 1. Pull down repository source code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Authenticate to AWS dynamically using verified OIDC Trust Parameters
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -34,47 +31,36 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           audience: "sts.amazonaws.com"
 
-      # 3. Setup HashiCorp Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.6.0"
 
-      # 4. Initialize working backend modules and tracking layers
       - name: Terraform Init
         run: terraform init
 
-      # 5. Format validation sanity check
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      # 6. Generate implementation dry-run plans
       - name: Terraform Plan
         run: terraform plan -input=false
         env:
-          # Automatically hydrates var.cloudfront_secret_token behind the scenes
           TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
 
-      # 7. Apply configuration matrix live into the AWS console environment
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
         env:
           TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
 
-      # 8. Log into private Amazon ECR Registry using your OIDC contexts
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 9. Compile Docker layers and push container images to your ECR Module
       - name: Build, Tag, and Push Docker Image to ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Build the container using the git SHA and the latest tag pointers
           docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest .
-          
-          # Push both tags up to your registry to automatically trigger the ECR vulnerability scans
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest

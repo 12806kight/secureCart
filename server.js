@@ -11,9 +11,21 @@ const server = http.createServer((req, res) => {
     return res.end(JSON.stringify({ status: 'UP', timestamp: new Date().toISOString() }));
   }
 
-  // Fallback serving a simple message
-  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
-  res.end('<h1>🛒 Welcome to SecureCart</h1><p>Application tier successfully running inside Docker!</p>');
+  // Serve valid UTF-8 HTML with HTML entity for the shopping cart icon
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <title>SecureCart</title>
+    </head>
+    <body>
+      <h1>&#128722; Welcome to SecureCart</h1>
+      <p>Application tier successfully running inside Docker!</p>
+    </body>
+    </html>
+  `);
 });
 
 server.listen(PORT, () => {

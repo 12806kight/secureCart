@@ -43,7 +43,7 @@ resource "aws_iam_role_policy" "ec2_least_privilege_secrets" {
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
-        Resource = "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter/securecart/*"
+        Resource = "arn:aws:ssm:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:parameter/securecart/*"
       },
       {
         Sid    = "ReadSpecificRDSSecret"
@@ -51,7 +51,7 @@ resource "aws_iam_role_policy" "ec2_least_privilege_secrets" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:securecart/rds*"
+        Resource = "arn:aws:secretsmanager:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:secret:securecart/rds*"
       }
     ]
   })
@@ -112,7 +112,8 @@ resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
           "elasticloadbalancing:*",
           "rds:*",
           "route53:*",
-          "acm:*"
+          "acm:*",
+          "sns*"
         ]
         Resource = "*"
       },

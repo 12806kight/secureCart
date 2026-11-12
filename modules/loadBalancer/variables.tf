@@ -28,7 +28,3 @@ variable "cloudfront_secret_token" {
   sensitive   = true
 }
 
-variable "alb_logs_bucket_id" {
-  type        = string
-  description = "S3 bucket ID for storing ALB access logs"
-}

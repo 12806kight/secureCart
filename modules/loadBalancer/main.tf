@@ -8,9 +8,11 @@ resource "aws_lb" "securecart_alb" {
   drop_invalid_header_fields = true
 
   access_logs {
-    bucket  = var.alb_logs_bucket_id
+    bucket  = aws_s3_bucket.alb_logs.id
     enabled = true
   }
+
+  depends_on = [aws_s3_bucket_policy.allow_alb_logging]
 
   tags = {
     Name        = "${var.project}-alb"

@@ -95,7 +95,7 @@ resource "aws_iam_role" "github_actions_role" {
   })
 }
 
-# Custom inline policy replacing AdministratorAccess
+# Custom inline policy replacing AdministratorAccesses
 resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
   name = "SecureCart-GitHubActions-ScopedDeploy"
   role = aws_iam_role.github_actions_role.id

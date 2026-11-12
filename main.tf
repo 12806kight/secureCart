@@ -49,14 +49,13 @@ module "ec2" {
 module "loadBalancer" {
   source = "./modules/loadBalancer"
 
-  project = var.project
-  vpc_id  = module.vpc.vpc_id
-
-  certificate_arn   = aws_acm_certificate_validation.cert.certificate_arn
-  public_subnet_ids = [module.vpc.public_subnet_a_id, module.vpc.public_subnet_b_id]
-
-  alb_security_group_id   = module.securityGroup.alb_sg_id
+  project                 = var.project
+  vpc_id                  = module.vpc.vpc_id
+  alb_security_group_id   = module.securityGroup.alb_security_group_id
+  public_subnet_ids       = module.vpc.public_subnet_ids
+  certificate_arn         = var.acm_certificate_arn
   cloudfront_secret_token = var.cloudfront_secret_token
+  alb_logs_bucket_id      = module.s3.alb_logs_bucket_id # Match your S3 module's output name
 }
 
 module "waf" {

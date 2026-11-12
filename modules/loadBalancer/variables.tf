@@ -22,11 +22,6 @@ variable "certificate_arn" {
   type = string
 }
 
-variable "alb_logs_bucket_id" {
-  type        = string
-  description = "S3 bucket ID for storing ALB access logs"
-}
-
 variable "cloudfront_secret_token" {
   type        = string
   description = "Secret header value sent by CloudFront to authenticate origin requests"

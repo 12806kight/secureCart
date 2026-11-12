@@ -61,11 +61,9 @@ module "loadBalancer" {
 
 module "waf" {
   source = "./modules/waf"
-
   project = var.project
-
-  # Passes the load balancer ARN output straight into the WAF module block
   alb_arn = module.loadBalancer.alb_arn
+  enable_waf = false
 }
 
 module "s3" {

@@ -1,7 +1,8 @@
 resource "aws_wafv2_web_acl" "this" {
+  count       = var.enable_waf ? 1 : 0
   name        = "${var.project}-web-acl"
   description = "WAF Web ACL protecting the SecureCart load balancer tier"
-  scope       = "REGIONAL" # I HIGHLY RECOMMEND USING CLOUDFRONT if you are using the AWS Free Tier. 
+  scope       = "REGIONAL"
 
   default_action {
     allow {}
@@ -34,7 +35,7 @@ resource "aws_wafv2_web_acl" "this" {
     priority = 2
 
     override_action {
-      none {} # This ensures the underlying rule actions (Block) take effect
+      none {}
     }
 
     statement {
@@ -51,7 +52,6 @@ resource "aws_wafv2_web_acl" "this" {
     }
   }
 
-
   visibility_config {
     cloudwatch_metrics_enabled = true
     metric_name                = "${var.project}-web-acl-metric"
@@ -65,6 +65,7 @@ resource "aws_wafv2_web_acl" "this" {
 }
 
 resource "aws_wafv2_web_acl_association" "this" {
+  count        = var.enable_waf ? 1 : 0
   resource_arn = var.alb_arn
-  web_acl_arn  = aws_wafv2_web_acl.this.arn
+  web_acl_arn  = aws_wafv2_web_acl.this[0].arn
 }

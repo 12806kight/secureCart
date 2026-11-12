@@ -1,108 +1,131 @@
-# 1. Dynamically retrieve your AWS Account ID
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 
 # =========================================================================
-# GITHUB ACTIONS OIDC PIPELINE CONFIGURATION
+# 1. EC2 Instance Role: Least Privilege for Secrets Manager & SSM
 # =========================================================================
 
-# 2. Re-establish the resource block so Terraform builds it cleanly
-data "tls_certificate" "github" {
-  url = "https://token.actions.githubusercontent.com"
-}
+resource "aws_iam_role_policy" "ec2_least_privilege_secrets" {
+  name = "SecureCart-EC2-SecretsAndParams-Policy"
+  role = aws_iam_role.ec2_ecr_role.id
 
-resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
-}
-
-# 3. Create the IAM Role with the exact-match string required for your private repository
-resource "aws_iam_role" "github_actions_role" {
-  name        = "github-actions-terraform-role"
-  description = "IAM Role assumed by GitHub Actions to deploy SecureCart infrastructure via OIDC"
-
-  assume_role_policy = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRoleWithWebIdentity"
+        Sid    = "ReadSpecificSSMParameters"
         Effect = "Allow"
-        Principal = {
-          # Linked back to your clean resource block
-          Federated = aws_iam_openid_connect_provider.github.arn
-        }
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"
-          }
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name        = "github-actions-terraform-role"
-    Project     = "SecureCart"
-    Environment = "development"
-  }
-}
-
-# 4. Attach Administrative permissions so the pipeline can manage and deploy all modules
-resource "aws_iam_role_policy_attachment" "pipeline_admin_attachment" {
-  role       = aws_iam_role.github_actions_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
-}
-
-
-# =========================================================================
-# EC2 APPLICATION INSTANCE PROFILE CONFIGURATION
-# =========================================================================
-
-# 5. Create an IAM Role for your EC2 instances to assume
-resource "aws_iam_role" "ec2_ecr_role" {
-  name = "${var.project}-ec2-ecr-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/securecart/*"
+      },
       {
-        Action = "sts:AssumeRole"
+        Sid    = "ReadSpecificRDSSecret"
         Effect = "Allow"
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:securecart/rds*"
       }
     ]
   })
 }
 
-# 6. Create the physical Instance Profile container that wraps the role for EC2 consumption
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "${var.project}-ec2-instance-profile"
-  role = aws_iam_role.ec2_ecr_role.name
-}
+# =========================================================================
+# 2. GitHub Actions Role: Scoped Deployment Policy (No AdministratorAccess)
+# =========================================================================
 
-# 7. Attach the AWS-managed policy that allows pulling container images from ECR
-resource "aws_iam_role_policy_attachment" "ec2_ecr_readonly" {
-  role       = aws_iam_role.ec2_ecr_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
+resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
+  name = "SecureCart-GitHubActions-ScopedDeploy"
+  role = aws_iam_role.github_actions_role.id
 
-# 8. Attach the core SSM policy to your EC2 instance role for Session Manager access
-resource "aws_iam_role_policy_attachment" "ec2_ssm_core" {
-  role       = aws_iam_role.ec2_ecr_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-# 9. Attach SSM Read Access to your EC2 instance role so it can read parameters
-resource "aws_iam_role_policy_attachment" "ec2_ssm_read" {
-  role       = aws_iam_role.ec2_ecr_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
-}
-
-# 10. Attaches the Secrets Manager policy directly to the EC2 role
-resource "aws_iam_role_policy_attachment" "ec2_secrets_read" {
-  role       = aws_iam_role.ec2_ecr_role.name
-  policy_arn = "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "CoreInfrastructureAndNetworking"
+        Effect = "Allow"
+        Action = [
+          "ec2:*",
+          "elasticloadbalancing:*",
+          "rds:*",
+          "route53:*",
+          "acm:*"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "StorageContainersAndEdge"
+        Effect = "Allow"
+        Action = [
+          "s3:*",
+          "ecr:*",
+          "cloudfront:*",
+          "wafv2:*",
+          "dynamodb:*"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ConfigSecretsAndMonitoring"
+        Effect = "Allow"
+        Action = [
+          "ssm:*",
+          "secretsmanager:*",
+          "cloudwatch:*",
+          "logs:*"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "ScopedIAMRoleManagement"
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:GetInstanceProfile",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole",
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:UpdateAssumeRolePolicy",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile",
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:PassRole"
+        ]
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/securecart*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/SecureCart*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github-actions*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ec2*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/securecart*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/SecureCart*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:instance-profile/ec2*"
+        ]
+      },
+      {
+        Sid    = "ManageGitHubOIDCProvider"
+        Effect = "Allow"
+        Action = [
+          "iam:GetOpenIDConnectProvider",
+          "iam:CreateOpenIDConnectProvider",
+          "iam:UpdateOpenIDConnectProviderThumbprint",
+          "iam:DeleteOpenIDConnectProvider",
+          "iam:TagOpenIDConnectProvider"
+        ]
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/://githubusercontent.com"
+      }
+    ]
+  })
 }

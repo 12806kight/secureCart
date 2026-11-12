@@ -26,11 +26,11 @@ resource "aws_security_group" "alb_sg" {
   }
 
   egress {
-    description     = "Allows ALB to forward traffic exclusively to app servers on port 8080"
-    from_port       = 8080
-    to_port         = 8080
-    protocol        = "tcp"
-    cidr_blocks     = [var.vpc_cidr_block]
+    description = "Allows ALB to forward traffic exclusively to app servers on port 8080"
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr_block]
   }
 
   tags = {

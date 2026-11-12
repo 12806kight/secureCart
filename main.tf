@@ -60,9 +60,9 @@ module "loadBalancer" {
 }
 
 module "waf" {
-  source = "./modules/waf"
-  project = var.project
-  alb_arn = module.loadBalancer.alb_arn
+  source     = "./modules/waf"
+  project    = var.project
+  alb_arn    = module.loadBalancer.alb_arn
   enable_waf = false
 }
 

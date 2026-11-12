@@ -23,7 +23,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
+      - name: Debug OIDC Claims
+        run: |
+          JWT=$(curl -s -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
+          echo "$JWT" | cut -d'.' -f2 | base64 -d 2>/dev/null | jq '{sub, aud, iss}'
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:

@@ -5,9 +5,15 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
 
 # 1. Application Load Balancer Security Group (Restricted to CloudFront Edge Only)
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.project}-alb-sg-v2"
+  name_prefix = "${var.project}-alb-sg-"
   description = "Controls traffic to the ALB strictly from CloudFront edge nodes"
   vpc_id      = var.vpc_id
+
+  lifecycle {
+    create_before_destroy = true
+  }
+  # ... keep your ingress and egress rules ...
+
 
   ingress {
     description     = "Allows HTTPS traffic exclusively from CloudFront"

@@ -1,11 +1,18 @@
 resource "aws_lb" "securecart_alb" {
-  name               = "${var.project}-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [var.alb_security_group_id]
-  subnets            = var.public_subnet_ids
-
+  name                       = "${var.project}-alb"
+  internal                   = false
+  load_balancer_type         = "application"
+  security_groups            = [var.alb_security_group_id]
+  subnets                    = var.public_subnet_ids
   enable_deletion_protection = false
+  drop_invalid_header_fields = true
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.id
+    enabled = true
+  }
+
+  depends_on = [aws_s3_bucket_policy.allow_alb_logging]
 
   tags = {
     Name        = "${var.project}-alb"
@@ -53,12 +60,6 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# 1. Declare the secret token variable in your ALB module (e.g., alb/variables.tf)
-variable "cloudfront_secret_token" {
-  description = "Secret header value sent by CloudFront to authenticate origin requests"
-  type        = string
-  sensitive   = true
-}
 
 # 2. Update the HTTPS listener to block direct traffic by default
 resource "aws_lb_listener" "https" {

@@ -10,7 +10,7 @@ variable "vpc_id" {
 
 variable "alb_security_group_id" {
   type        = string
-  description = "SG ID Loadbalander"
+  description = "SG ID Loadbalancer"
 }
 
 variable "public_subnet_ids" {
@@ -18,5 +18,17 @@ variable "public_subnet_ids" {
   description = "List of public subnet IDs where the ALB will be deployed"
 }
 
-variable "certificate_arn" { type = string }
+variable "certificate_arn" {
+  type = string
+}
 
+variable "alb_logs_bucket_id" {
+  type        = string
+  description = "S3 bucket ID for storing ALB access logs"
+}
+
+variable "cloudfront_secret_token" {
+  type        = string
+  description = "Secret header value sent by CloudFront to authenticate origin requests"
+  sensitive   = true
+}

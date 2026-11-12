@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
 data "aws_caller_identity" "current" {}
 
 # 1. Hardened S3 Bucket

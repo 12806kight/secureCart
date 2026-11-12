@@ -4,23 +4,22 @@ resource "aws_cloudfront_distribution" "this" {
   comment         = "CloudFront Distribution for ${var.project}"
   price_class     = "PriceClass_100" # Free Tier optimal (US/Europe edge locations)
 
-  # Add this line (or use a variable like var.domain_aliases)
   aliases = ["securetestkight.com"]
 
   origin {
     domain_name = var.alb_dns_name
     origin_id   = "ALB-${var.project}"
 
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "match-viewer" # Matches traffic encryption protocol
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-
     custom_header {
       name  = "X-Custom-SecureCart-Token"
       value = var.cloudfront_secret_token
+    }
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 

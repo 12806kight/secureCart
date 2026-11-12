@@ -15,7 +15,7 @@ resource "aws_iam_role" "ec2_ecr_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "://amazonaws.com"
+          Service = "ec2.amazonaws.com"
         }
       }
     ]
@@ -67,8 +67,8 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 # =========================================================================
 
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://githubusercontent.com"
-  client_id_list  = ["://amazonaws.com"]
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1", "1c58a3a8518e8759bf075b76b750d4f2df264fcd"]
 }
 
@@ -86,10 +86,10 @@ resource "aws_iam_role" "github_actions_role" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "://githubusercontent.com:aud" = "://amazonaws.com"
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "://githubusercontent.com:sub" = "repo:*/*"
+            "token.actions.githubusercontent.com:sub" = "repo:12806kight/secureCart:*"
           }
         }
       }
@@ -185,7 +185,7 @@ resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
           "iam:DeleteOpenIDConnectProvider",
           "iam:TagOpenIDConnectProvider"
         ]
-        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/://githubusercontent.com"
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
       }
     ]
   })

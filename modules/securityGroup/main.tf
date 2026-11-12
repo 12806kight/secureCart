@@ -23,14 +23,6 @@ resource "aws_security_group" "alb_sg" {
     prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
   }
 
-  ingress {
-    description     = "Allows HTTP traffic exclusively from CloudFront for HTTPS redirect"
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    prefix_list_ids = [data.aws_ec2_managed_prefix_list.cloudfront.id]
-  }
-
   egress {
     description = "Allows ALB to forward traffic exclusively to app servers on port 8080"
     from_port   = 8080

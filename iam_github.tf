@@ -2,9 +2,33 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 # =========================================================================
-# 1. EC2 Instance Role: Least Privilege for Secrets Manager & SSM
+# 1. EC2 Instance Role & Profile (Least Privilege)
 # =========================================================================
 
+resource "aws_iam_role" "ec2_ecr_role" {
+  name = "securecart-ec2-ecr-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "://amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# Keep ECR ReadOnly so EC2 can pull Docker images
+resource "aws_iam_role_policy_attachment" "ec2_ecr_readonly" {
+  role       = aws_iam_role.ec2_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+# Custom inline policy replacing SecretsManagerReadWrite & AmazonSSMReadOnlyAccess
 resource "aws_iam_role_policy" "ec2_least_privilege_secrets" {
   name = "SecureCart-EC2-SecretsAndParams-Policy"
   role = aws_iam_role.ec2_ecr_role.id
@@ -19,7 +43,7 @@ resource "aws_iam_role_policy" "ec2_least_privilege_secrets" {
           "ssm:GetParameter",
           "ssm:GetParameters"
         ]
-        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/securecart/*"
+        Resource = "arn:aws:ssm:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:parameter/securecart/*"
       },
       {
         Sid    = "ReadSpecificRDSSecret"
@@ -27,16 +51,53 @@ resource "aws_iam_role_policy" "ec2_least_privilege_secrets" {
         Action = [
           "secretsmanager:GetSecretValue"
         ]
-        Resource = "arn:aws:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:securecart/rds*"
+        Resource = "arn:aws:secretsmanager:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:secret:securecart/rds*"
       }
     ]
   })
 }
 
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "securecart-ec2-instance-profile"
+  role = aws_iam_role.ec2_ecr_role.name
+}
+
 # =========================================================================
-# 2. GitHub Actions Role: Scoped Deployment Policy (No AdministratorAccess)
+# 2. GitHub OIDC Provider & Role (Scoped Deployment Policy)
 # =========================================================================
 
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://githubusercontent.com"
+  client_id_list  = ["://amazonaws.com"]
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1", "1c58a3a8518e8759bf075b76b750d4f2df264fcd"]
+}
+
+resource "aws_iam_role" "github_actions_role" {
+  name = "github-actions-terraform-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.github.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "://githubusercontent.com:aud" = "://amazonaws.com"
+          }
+          StringLike = {
+            "://githubusercontent.com:sub" = "repo:*/*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# Custom inline policy replacing AdministratorAccess
 resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
   name = "SecureCart-GitHubActions-ScopedDeploy"
   role = aws_iam_role.github_actions_role.id

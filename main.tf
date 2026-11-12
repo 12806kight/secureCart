@@ -51,11 +51,11 @@ module "loadBalancer" {
 
   project                 = var.project
   vpc_id                  = module.vpc.vpc_id
-  alb_security_group_id   = module.securityGroup.alb_security_group_id
+  alb_security_group_id   = module.securityGroup.alb_sg_id # Fixed: matches modules/securityGroup/outputs.tf
   public_subnet_ids       = module.vpc.public_subnet_ids
-  certificate_arn         = var.acm_certificate_arn
+  certificate_arn         = aws_acm_certificate_validation.cert.certificate_arn # Or match how module.cloudfront gets its certificate_arn
   cloudfront_secret_token = var.cloudfront_secret_token
-  alb_logs_bucket_id      = module.s3.alb_logs_bucket_id # Match your S3 module's output name
+  # Removed alb_logs_bucket_id since aws_s3_bucket.alb_logs is already inside modules/loadBalancer
 }
 
 module "waf" {

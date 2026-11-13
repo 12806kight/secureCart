@@ -70,7 +70,7 @@ resource "aws_security_group" "nat_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   ingress {
@@ -78,7 +78,7 @@ resource "aws_security_group" "nat_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
+    cidr_blocks = [var.vpc_cidr]
   }
 
   egress {
@@ -129,11 +129,15 @@ resource "aws_instance" "nat_instance" {
               echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
               sysctl --system
 
-              # 2. Clear default FORWARD REJECT rules and enable NAT masquerading directly
-              iptables -F FORWARD
-              iptables -P FORWARD ACCEPT
+              # 2. Configure NAT masquerading & forwarding directly in live nftables
               PRIMARY_IF=$(ip route | grep default | awk '{print $5}')
-              iptables -t nat -A POSTROUTING -o "$PRIMARY_IF" -j MASQUERADE
+
+              nft add table ip nat
+              nft 'add chain ip nat postrouting { type nat hook postrouting priority 100 ; policy accept ; }'
+              nft add rule ip nat postrouting oifname "$PRIMARY_IF" masquerade
+
+              nft add table inet filter
+              nft 'add chain inet filter forward { type filter hook forward priority 0 ; policy accept ; }'
               EOF
 
   tags = {

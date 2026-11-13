@@ -120,27 +120,36 @@ resource "aws_instance" "nat_instance" {
     encrypted = true
   }
 
-    user_data = <<-EOF
+  user_data = <<-EOF
               #!/bin/bash
               set -e
-              dnf install -y iptables-services
-              systemctl enable iptables
-              systemctl start iptables
 
-              # Enable IPv4 forwarding persistently on AL2023
+              # 1. Enable IPv4 forwarding immediately and persistently
               echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
               sysctl --system
 
-              # Clear default AL2023 FORWARD REJECT rule so private subnet traffic can pass
-              iptables -F FORWARD
-              iptables -P FORWARD ACCEPT
-
-              # Configure NAT masquerading on primary interface
+              # 2. Configure NAT masquerading & forwarding via native AL2023 nftables
               PRIMARY_IF=$(ip route | grep default | awk '{print $5}')
-              iptables -t nat -A POSTROUTING -o "$PRIMARY_IF" -j MASQUERADE
 
-              service iptables save
+              cat <<NFT > /etc/nftables/nat.nft
+              table ip nat {
+                chain postrouting {
+                  type nat hook postrouting priority 100; policy accept;
+                  oifname "$PRIMARY_IF" masquerade
+                }
+              }
+              table inet filter {
+                chain forward {
+                  type filter hook forward priority 0; policy accept;
+                }
+              }
+              NFT
+
+              nft -f /etc/nftables/nat.nft
+              echo 'include "/etc/nftables/nat.nft"' >> /etc/sysconfig/nftables.conf
+              systemctl enable --now nftables
               EOF
+
 
   tags = {
     Name        = "${var.project}-nat-instance"

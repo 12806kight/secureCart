@@ -98,3 +98,9 @@ resource "aws_cloudwatch_metric_alarm" "alb_504_timeout" {
     LoadBalancer = aws_lb.securecart_alb.arn_suffix
   }
 }
+
+resource "aws_sns_topic_subscription" "alb_alerts_email" {
+  topic_arn = aws_sns_topic.alb_alerts.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}

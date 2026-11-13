@@ -28,3 +28,8 @@ variable "cloudfront_secret_token" {
   sensitive   = true
 }
 
+variable "alert_email" {
+  type        = string
+  description = "Email address for CloudWatch ALB 504 timeout alerts"
+  default     = "12806kight@gmail.com"
+}

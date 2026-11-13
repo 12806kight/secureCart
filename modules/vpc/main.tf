@@ -120,15 +120,25 @@ resource "aws_instance" "nat_instance" {
     encrypted = true
   }
 
-  user_data = <<-EOF
+    user_data = <<-EOF
               #!/bin/bash
+              set -e
               dnf install -y iptables-services
               systemctl enable iptables
               systemctl start iptables
-              echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
-              sysctl -p
+
+              # Enable IPv4 forwarding persistently on AL2023
+              echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
+              sysctl --system
+
+              # Clear default AL2023 FORWARD REJECT rule so private subnet traffic can pass
+              iptables -F FORWARD
+              iptables -P FORWARD ACCEPT
+
+              # Configure NAT masquerading on primary interface
               PRIMARY_IF=$(ip route | grep default | awk '{print $5}')
               iptables -t nat -A POSTROUTING -o "$PRIMARY_IF" -j MASQUERADE
+
               service iptables save
               EOF
 

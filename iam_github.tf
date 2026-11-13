@@ -135,6 +135,7 @@ resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
         Action = [
           "ssm:*",
           "secretsmanager:*",
+          "kms:*",
           "cloudwatch:*",
           "logs:*"
         ]

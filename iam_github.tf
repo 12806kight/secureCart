@@ -113,7 +113,7 @@ resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
           "rds:*",
           "route53:*",
           "acm:*",
-          "sns*"
+          "sns:*"
         ]
         Resource = "*"
       },

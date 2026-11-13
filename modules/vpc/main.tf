@@ -122,34 +122,19 @@ resource "aws_instance" "nat_instance" {
 
   user_data = <<-EOF
               #!/bin/bash
-              set -e
+              set -ex
+              exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 
               # 1. Enable IPv4 forwarding immediately and persistently
               echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
               sysctl --system
 
-              # 2. Configure NAT masquerading & forwarding via native AL2023 nftables
+              # 2. Clear default FORWARD REJECT rules and enable NAT masquerading directly
+              iptables -F FORWARD
+              iptables -P FORWARD ACCEPT
               PRIMARY_IF=$(ip route | grep default | awk '{print $5}')
-
-              cat <<NFT > /etc/nftables/nat.nft
-              table ip nat {
-                chain postrouting {
-                  type nat hook postrouting priority 100; policy accept;
-                  oifname "$PRIMARY_IF" masquerade
-                }
-              }
-              table inet filter {
-                chain forward {
-                  type filter hook forward priority 0; policy accept;
-                }
-              }
-              NFT
-
-              nft -f /etc/nftables/nat.nft
-              echo 'include "/etc/nftables/nat.nft"' >> /etc/sysconfig/nftables.conf
-              systemctl enable --now nftables
+              iptables -t nat -A POSTROUTING -o "$PRIMARY_IF" -j MASQUERADE
               EOF
-
 
   tags = {
     Name        = "${var.project}-nat-instance"

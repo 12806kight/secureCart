@@ -53,14 +53,21 @@ jobs:
         env:
           TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
 
-      - name: Login to Amazon ECR
+            - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, Tag, and Push Docker Image to ECR
+      - name: Build, Tag, and Push Immutable Docker Image to ECR
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest .
+          docker build -t ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG .
           docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-          docker push ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
+
+          # Publish the active immutable commit SHA to SSM Parameter Store
+          aws ssm put-parameter \
+            --name "/securecart/app/image_tag" \
+            --value "$IMAGE_TAG" \
+            --type "String" \
+            --overwrite \
+            --region ${{ env.AWS_REGION }}

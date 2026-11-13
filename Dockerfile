@@ -1,15 +1,18 @@
 FROM node:20-alpine
 
-# FIXED: Forces the container runtime and OS layers to handle UTF-8 text encoding natively
-ENV LANG=C.UTF-8 \
-    LC_ALL=C.UTF-8
+WORKDIR /usr/src/app
 
-WORKDIR /app
-
+# Copy package files first for layer caching
 COPY package*.json ./
-RUN npm install --production
 
-COPY server.js ./
+# Deterministic production-only install
+RUN npm ci --only=production
+
+# Copy application source and set ownership to node user
+COPY --chown=node:node . .
+
+# Drop root privileges before running the app
+USER node
 
 EXPOSE 8080
 

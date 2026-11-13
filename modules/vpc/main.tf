@@ -130,7 +130,7 @@ exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&
 echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
 sysctl --system
 
-# 2. Install iptables-nft from Amazon Linux 2023 repos
+# 2. Install iptables-nft from Amazon Linux 2023 repo
 dnf install -y iptables-nft
 
 # 3. Configure NAT masquerading and open FORWARD chain on ens5

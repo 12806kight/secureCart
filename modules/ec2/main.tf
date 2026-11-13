@@ -19,62 +19,62 @@ resource "aws_launch_template" "app" {
     security_groups             = [var.app_security_group_id]
   }
 
-  user_data = base64encode(<<-EOF
-              #!/bin/bash
-              set -e
-              # Redirect non-sensitive setup logs so you can inspect boot progress
-              exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
-              
-              export DEBIAN_FRONTEND=noninteractive
-              export NEEDRESTART_MODE=a
-              
-              # 1. Install system utilities and python/pip dependencies
-              apt-get update -y
-              apt-get install -y jq curl unzip python3-pip python3-venv
+  user_data = base64encode(<<EOF
+#!/bin/bash
+set -e
+# Redirect non-sensitive setup logs so you can inspect boot progress
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 
-              # 2. Install the AWS CLI tool via Pip
-              python3 -m venv /opt/awscli-env
-              /opt/awscli-env/bin/pip install --upgrade pip setuptools wheel
-              /opt/awscli-env/bin/pip install awscli
-              ln -sf /opt/awscli-env/bin/aws /usr/local/bin/aws
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
 
-              # 3. Install Docker cleanly on Ubuntu 24.04 LTS
-              apt-get install -y docker.io
+# 1. Install system utilities and python/pip dependencies
+apt-get update -y
+apt-get install -y jq curl unzip python3-pip python3-venv
 
-              systemctl enable docker
-              systemctl start docker
+# 2. Install the AWS CLI tool via Pip
+python3 -m venv /opt/awscli-env
+/opt/awscli-env/bin/pip install --upgrade pip setuptools wheel
+/opt/awscli-env/bin/pip install awscli
+ln -sf /opt/awscli-env/bin/aws /usr/local/bin/aws
 
-              # 4. Disable command tracing and pause console logging before handling secrets
-              set +x
-              exec > /dev/null 2>&1
+# 3. Install Docker cleanly on Ubuntu 24.04 LTS
+apt-get install -y docker.io
 
-              # 5. Fetch active immutable image tag (falls back to latest if not yet set)
-              IMAGE_TAG=$(aws ssm get-parameter --name "/securecart/app/image_tag" --region us-east-1 --query "Parameter.Value" --output text 2>/dev/null || echo "latest")
+systemctl enable docker
+systemctl start docker
 
-              # 6. Authenticate securely to ECR and pull the application image
-              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${var.ecr_repository_url}
-              docker pull ${var.ecr_repository_url}:"$IMAGE_TAG"
+# 4. Disable command tracing and pause console logging before handling secrets
+set +x
+exec > /dev/null 2>&1
 
-              # 7. Fetch database configuration and credentials silently
-              FETCH_HOST=$(aws ssm get-parameter --name "/securecart/dev/db_host" --region us-east-1 --query "Parameter.Value" --output text)
-              FETCH_USER=$(aws ssm get-parameter --name "/securecart/db/username" --region us-east-1 --query "Parameter.Value" --output text)
-              FETCH_SECRET_ARN=$(aws ssm get-parameter --name "/securecart/db/password_secret_arn" --region us-east-1 --query "Parameter.Value" --output text)
-              FETCH_REAL_PASS=$(aws secretsmanager get-secret-value --secret-id "$FETCH_SECRET_ARN" --region us-east-1 --query "SecretString" --output text | jq -r '.password')
+# 5. Fetch active immutable image tag (falls back to latest if not yet set)
+IMAGE_TAG=$(aws ssm get-parameter --name "/securecart/app/image_tag" --region us-east-1 --query "Parameter.Value" --output text 2>/dev/null || echo "latest")
 
-              # 8. Start the SecureCart container without logging environment secrets
-              docker run -d \
-                -p 8080:8080 \
-                -e DB_HOST="$FETCH_HOST" \
-                -e DB_USER="$FETCH_USER" \
-                -e DB_PASSWORD="$FETCH_REAL_PASS" \
-                -e DB_NAME="SecureCartDB" \
-                --name securecart-service \
-                --restart always \
-                ${var.ecr_repository_url}:"$IMAGE_TAG"
+# 6. Authenticate securely to ECR and pull the application image
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${var.ecr_repository_url}
+docker pull ${var.ecr_repository_url}:"$IMAGE_TAG"
 
-              # Clear sensitive shell variables from memory
-              unset FETCH_HOST FETCH_USER FETCH_SECRET_ARN FETCH_REAL_PASS IMAGE_TAG
-              EOF
+# 7. Fetch database configuration and credentials silently
+FETCH_HOST=$(aws ssm get-parameter --name "/securecart/dev/db_host" --region us-east-1 --query "Parameter.Value" --output text)
+FETCH_USER=$(aws ssm get-parameter --name "/securecart/db/username" --region us-east-1 --query "Parameter.Value" --output text)
+FETCH_SECRET_ARN=$(aws ssm get-parameter --name "/securecart/db/password_secret_arn" --region us-east-1 --query "Parameter.Value" --output text)
+FETCH_REAL_PASS=$(aws secretsmanager get-secret-value --secret-id "$FETCH_SECRET_ARN" --region us-east-1 --query "SecretString" --output text | jq -r '.password')
+
+# 8. Start the SecureCart container without logging environment secrets
+docker run -d \
+  -p 8080:8080 \
+  -e DB_HOST="$FETCH_HOST" \
+  -e DB_USER="$FETCH_USER" \
+  -e DB_PASSWORD="$FETCH_REAL_PASS" \
+  -e DB_NAME="SecureCartDB" \
+  --name securecart-service \
+  --restart always \
+  ${var.ecr_repository_url}:"$IMAGE_TAG"
+
+# Clear sensitive shell variables from memory
+unset FETCH_HOST FETCH_USER FETCH_SECRET_ARN FETCH_REAL_PASS IMAGE_TAG
+EOF
   )
 
   lifecycle {

@@ -70,7 +70,7 @@ resource "aws_security_group" "nat_sg" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
   }
 
   ingress {
@@ -78,7 +78,7 @@ resource "aws_security_group" "nat_sg" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
   }
 
   egress {
@@ -109,6 +109,7 @@ resource "aws_instance" "nat_instance" {
   vpc_security_group_ids      = [aws_security_group.nat_sg.id]
   associate_public_ip_address = true
   source_dest_check           = false
+  user_data_replace_on_change = true
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -120,25 +121,26 @@ resource "aws_instance" "nat_instance" {
     encrypted = true
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              set -ex
-              exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+  user_data = <<EOF
+#!/bin/bash
+set -ex
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 
-              # 1. Enable IPv4 forwarding immediately and persistently
-              echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
-              sysctl --system
+# 1. Enable IPv4 forwarding immediately and persistently
+echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
+sysctl --system
 
-              # 2. Configure NAT masquerading & forwarding directly in live nftables
-              PRIMARY_IF=$(ip route | grep default | awk '{print $5}')
+# 2. Configure NAT masquerading & forwarding directly in live nftables
+PRIMARY_IF=$(ip -o -4 route show to default | awk '{print $5}' | head -n1)
+echo "Detected primary interface: $PRIMARY_IF"
 
-              nft add table ip nat
-              nft 'add chain ip nat postrouting { type nat hook postrouting priority 100 ; policy accept ; }'
-              nft add rule ip nat postrouting oifname "$PRIMARY_IF" masquerade
+nft add table ip nat
+nft 'add chain ip nat postrouting { type nat hook postrouting priority 100 ; policy accept ; }'
+nft add rule ip nat postrouting oifname "$PRIMARY_IF" masquerade
 
-              nft add table inet filter
-              nft 'add chain inet filter forward { type filter hook forward priority 0 ; policy accept ; }'
-              EOF
+nft add table inet filter
+nft 'add chain inet filter forward { type filter hook forward priority 0 ; policy accept ; }'
+EOF
 
   tags = {
     Name        = "${var.project}-nat-instance"

@@ -66,7 +66,7 @@ module "waf" {
 
 module "s3" {
   source      = "./modules/s3"
-  bucket_name = "REDACTED_BUCKET_NAME"
+  bucket_name = var.state_bucket_name
 }
 
 module "ecr" {

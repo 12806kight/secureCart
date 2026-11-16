@@ -15,7 +15,7 @@ resource "aws_iam_role" "ec2_ecr_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "ec2.amazonaws.com"
+          Service = "://amazonaws.com"
         }
       }
     ]
@@ -67,8 +67,8 @@ resource "aws_iam_instance_profile" "ec2_profile" {
 # =========================================================================
 
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
+  url             = "https://githubusercontent.com"
+  client_id_list  = ["://amazonaws.com"]
   thumbprint_list = ["ab9d0263244dd0326eb67015705a667e79cfe998"]
 }
 
@@ -86,8 +86,8 @@ resource "aws_iam_role" "github_actions_role" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = "repo:12806kight@51365792/secureCart@1446240309:ref:refs/heads/main"
+            "://githubusercontent.com:aud" = "://amazonaws.com"
+            "://githubusercontent.com:sub" = "repo:12806kight/secureCart:ref:refs/heads/main"
           }
         }
       }
@@ -95,7 +95,7 @@ resource "aws_iam_role" "github_actions_role" {
   })
 }
 
-# Custom inline policy replacing AdministratorAccesses
+# Custom inline policy replacing AdministratorAccess
 resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
   name = "SecureCart-GitHubActions-ScopedDeploy"
   role = aws_iam_role.github_actions_role.id
@@ -186,7 +186,7 @@ resource "aws_iam_role_policy" "github_actions_scoped_deploy" {
           "iam:DeleteOpenIDConnectProvider",
           "iam:TagOpenIDConnectProvider"
         ]
-        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"
+        Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/://githubusercontent.com"
       }
     ]
   })

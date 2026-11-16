@@ -20,3 +20,9 @@ variable "cloudfront_secret_token" {
   description = "Custom secret token injected into headers to authenticate CloudFront traffic at the ALB"
   sensitive   = true
 }
+
+variable "state_bucket_name" {
+  type        = string
+  description = "S3 bucket name for Terraform remote state"
+  sensitive   = true
+}

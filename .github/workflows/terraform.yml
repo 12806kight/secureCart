@@ -23,34 +23,40 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-          audience: "sts.amazonaws.com"
+          audience: "://amazonaws.com"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: "1.6.0"
+          terraform_version: "1.16.5"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
 
       - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Format 
-        run: terraform fmt -recursive
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
 
       - name: Terraform Plan
         run: terraform plan -input=false
         env:
           TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
+          TF_VAR_state_bucket_name: ${{ secrets.TF_STATE_BUCKET }}
+
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply -auto-approve -input=false
         env:
           TF_VAR_cloudfront_secret_token: ${{ secrets.CLOUDFRONT_SECRET_TOKEN }}
+          TF_VAR_state_bucket_name: ${{ secrets.TF_STATE_BUCKET }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -69,4 +75,3 @@ jobs:
             --type "String" \
             --overwrite \
             --region ${{ env.AWS_REGION }}
-

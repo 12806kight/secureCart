@@ -20,7 +20,6 @@ resource "aws_db_instance" "rds_instance_TS" {
 
   db_name = "SecureCartDB"
 
-  # 1. Provide the username string natively
   username = "db_admin"
 
   # 2. Force AWS to natively generate the secret container and the password

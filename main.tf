@@ -29,7 +29,7 @@ module "ec2" {
 
   project = var.project
 
-  # Passes the VPC ID down as required by your ec2/variables.tf file
+  # Passes the VPC ID down as required by your ec2/variables.tf files
   vpc_id = module.vpc.vpc_id
 
   # Point to app_sg_id

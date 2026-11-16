@@ -61,6 +61,11 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   name = "securecart-ec2-instance-profile"
   role = aws_iam_role.ec2_ecr_role.name
 }
+# Enable AWS Systems Manager (SSM) Session Manager access
+resource "aws_iam_role_policy_attachment" "ec2_ssm_core" {
+  role       = aws_iam_role.ec2_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
 
 # =========================================================================
 # 2. GitHub OIDC Provider & Role (Scoped Deployment Policy)

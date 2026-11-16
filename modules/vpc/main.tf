@@ -62,7 +62,7 @@ data "aws_ami" "amazon_linux_2023" {
 
 resource "aws_security_group" "nat_sg" {
   name        = "${var.project}-nat-sg"
-  description = "Allows outbound HTTP/HTTPS traffic from private subnets through NAT instance"
+  description = "Allows outbound HTTP/HTTPS, DNS, and NTP traffic from private subnets through NAT instance"
   vpc_id      = aws_vpc.securecart-vpc.id
 
   ingress {
@@ -81,6 +81,30 @@ resource "aws_security_group" "nat_sg" {
     cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
   }
 
+  ingress {
+    description = "Allow DNS (UDP) from private subnets"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
+  }
+
+  ingress {
+    description = "Allow DNS (TCP) from private subnets"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
+  }
+
+  ingress {
+    description = "Allow NTP (UDP) from private subnets for AWS API clock sync"
+    from_port   = 123
+    to_port     = 123
+    protocol    = "udp"
+    cidr_blocks = [for k, v in var.subnets : v.cidr_block if v.type == "private"]
+  }
+
   egress {
     description = "Allow outbound HTTPS to internet"
     from_port   = 443
@@ -90,10 +114,34 @@ resource "aws_security_group" "nat_sg" {
   }
 
   egress {
-    description = "Allow outbound HTTP to internet for apt repositories"
+    description = "Allow outbound HTTP to internet for package repositories"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow outbound DNS (UDP) to internet"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow outbound DNS (TCP) to internet"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow outbound NTP (UDP) to internet for time sync"
+    from_port   = 123
+    to_port     = 123
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -130,15 +178,17 @@ exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&
 echo "net.ipv4.ip_forward = 1" > /etc/sysctl.d/99-nat.conf
 sysctl --system
 
-# 2. Install iptables-nft from Amazon Linux 2023 repo
-dnf install -y iptables-nft
+# 2. Install iptables-nft and iptables-services from Amazon Linux 2023 repo
+dnf install -y iptables-nft iptables-services
+systemctl enable iptables
 
-# 3. Configure NAT masquerading and open FORWARD chain on ens5
+# 3. Configure NAT masquerading, open FORWARD chain, and save rules permanently
 PRIMARY_IF=$(ip -o -4 route show to default | awk '{print $5}' | head -n1)
 iptables -F FORWARD
 iptables -P FORWARD ACCEPT
 iptables -t nat -F POSTROUTING
 iptables -t nat -A POSTROUTING -o "$PRIMARY_IF" -j MASQUERADE
+service iptables save
 EOF
 
   tags = {

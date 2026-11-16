@@ -67,8 +67,8 @@ secureCart/
 ├── .github/workflows/   # GitHub Actions CI/CD pipeline (OIDC + Zero-Downtime Refresh)
 ├── modules/
 │   ├── cloudfront/      # CDN, SSL settings, and custom origin headers
-│   ├── ec2/             # IMDSv2 Launch Template, Auto Scaling Group, and boot script
-│   ├── ecr/             # Immutable private Docker image repository & cleanup policy
+│   ├── ec2/             # IMDSv2 Launch Template, Auto Scaling Group, and boo
+│   ├── ecr/             # Immutable private Docker image repository & cleanup 
 │   ├── loadBalancer/    # ALB, port 8080 target group, S3 access logs, and CloudWatch/SNS alerts
 │   ├── rds/             # Encrypted MySQL database in private subnets
 │   ├── s3/              # Remote Terraform state bucket
@@ -80,17 +80,17 @@ secureCart/
 ├── package.json         # Node.js dependencies
 ├── package-lock.json    # Pinned dependency lockfile for deterministic builds
 ├── iam_github.tf        # Scoped OIDC role for GitHub Actions & EC2 instance profile
-├── route53.tf           # Domain DNS and SSL cert validation
+├── dns_ssl.tf           # Domain DNS and SSL cert validation
 ├── main.tf              # Connects all Terraform modules together
-├── backend.tf           # S3 state backend config
+├── providers.tf           # S3 state backend config
 └── outputs.tf           # Useful URLs and resource IDs after apply
 
 Challenges & How I Solved Them
 
-502 Bad Gateway from CloudFront:** CloudFront connected to the ALB's `.elb.amazonaws.com` domain while the ALB presented an SSL certificate for `securetestkight.com`. Because the hostnames didn't match, the TLS handshake failed. I fixed this by configuring CloudFront to forward the `Host` header to the origin.
-403 Bad Request on Custom Domain:** Even after attaching the ACM SSL certificate to CloudFront, visiting `securetestkight.com` returned a 403 error because `securetestkight.com` wasn't listed under CloudFront's `aliases` in Terraform. Adding the domain alias resolved it.
+502 Bad Gateway from CloudFront: CloudFront connected to the ALB's `.elb.amazonaws.com` domain while the ALB presented an SSL certificate for `securetestkight.com`. Because the hostnames didn't match, the TLS handshake failed. I fixed this by configuring CloudFront to forward the `Host` header to the origin.
+403 Bad Request on Custom Domain: Even after attaching the ACM SSL certificate to CloudFront, visiting `securetestkight.com` returned a 403 error because `securetestkight.com` wasn't listed under CloudFront's `aliases` in Terraform. Adding the domain alias resolved it.
 Free-Tier NAT Routing on Amazon Linux 2023:** To avoid paying for a managed AWS NAT Gateway, I built a custom `t3.micro` NAT instance so private EC2 servers could download updates and pull ECR images. Minimal Amazon Linux 2023 images don't ship with `iptables` pre-installed, so private subnet traffic timed out until I configured `user_data` to install `iptables-nft`, enable IP forwarding, and apply `MASQUERADE` rules on boot.
-Eliminating CI/CD Deployment Race Conditions:** Initially, Terraform updated the Auto Scaling Group before the new Docker image finished pushing to ECR. I reordered the GitHub Actions workflow to provision ECR and push the commit-tagged image first, run `terraform apply` second, and trigger a rolling Auto Scaling Group **Instance Refresh** last.
+Eliminating CI/CD Deployment Race Conditions:** Initially, Terraform updated the Auto Scaling Group before the new Docker image finished pushing to ECR. I reordered the GitHub Actions workflow to provision ECR and push the commit-tagged image first, run `terraform apply` second, and trigger a rolling Auto Scaling Group Instance Refresh** last.
 
 How Deployment Works
 

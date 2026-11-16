@@ -100,4 +100,67 @@ How Deployment Works
 4. Terraform runs `plan` and `apply` to keep all cloud infrastructure in sync.
 5. GitHub Actions triggers a rolling **Auto Scaling Group Instance Refresh**, seamlessly replacing EC2 instances with the new container image after they pass `/health` checks—achieving zero-downtime deployments.
 
- 
+## Getting Started
+
+### Prerequisites
+* **AWS Account:** Permissions to create VPC, EC2, ALB, RDS, CloudFront, Route 53, ECR, KMS, IAM, SSM, Secrets Manager, CloudWatch, SNS, and WAF resources.
+* **Domain Name:** A registered domain managed in an AWS Route 53 Hosted Zone.
+* **Local Tools:** [Terraform](https://hashicorp.com) (`>= 1.6.0`), [AWS CLI](https://amazon.com), and Git.
+
+---
+
+### 1. One-Time AWS Bootstrap
+Before running Terraform for the first time, set up these foundational resources in AWS:
+
+1. **Remote State Bucket:** Create an encrypted S3 bucket (with versioning enabled) to store your Terraform state file.
+2. **Database & App Secrets:** Store your database credentials in AWS Secrets Manager / SSM Parameter Store under `/securecart/*` so EC2 instances can retrieve them at boot.
+3. **GitHub Actions OIDC (Optional for CI/CD):** If deploying via GitHub Actions, configure an AWS IAM OIDC Identity Provider for `://githubusercontent.com` and add your target `AWS_ACCOUNT_ID` and secrets to your repository settings.
+
+---
+
+### 2. Configure Variables & Backend
+Clone the repository and create a local `terraform.tfvars` file (which is excluded from Git via `.gitignore`) to supply your required sensitive inputs:
+
+```bash
+git clone https://github.com
+cd secureCart
+```
+
+Create `terraform.tfvars` with your environment values:
+
+```hcl
+region                  = "us-east-1"
+project                 = "securecart"
+multi_az                = false
+cloudfront_secret_token = "replace-with-a-strong-random-token"
+state_bucket_name       = "your-unique-terraform-state-bucket"
+```
+
+| Variable | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `region` | `string` | `"us-east-1"` | Target AWS region for deployment. |
+| `project` | `string` | `"securecart"` | Project prefix used for resource naming and tagging. |
+| `multi_az` | `bool` | `false` | Enables Multi-AZ deployment for RDS (`false` keeps RDS within Free Tier). |
+| `cloudfront_secret_token` | `string` | *(Required)* | Secret header value injected by CloudFront and verified by the ALB. |
+| `state_bucket_name` | `string` | *(Required)* | Name of your pre-existing S3 bucket for Terraform remote state. |
+
+---
+
+### 3. Deploy Infrastructure
+Because `providers.tf` uses a partial S3 backend configuration (`use_lockfile = true`, `encrypt = true`), pass your state bucket name and region during `terraform init`:
+
+```bash
+terraform init \
+  -backend-config="bucket=your-unique-terraform-state-bucket" \
+  -backend-config="region=us-east-1"
+
+terraform plan
+terraform apply
+```
+
+### 4. Cleanup
+To tear down all provisioned AWS resources and avoid ongoing charges:
+
+```bash
+terraform destroy
+```
